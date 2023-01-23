@@ -22,6 +22,7 @@
 (define-key global-map [remap switch-to-buffer] #'helm-mini)
 (define-key global-map [remap other-window] #'ace-select-window)
 (define-key global-map [remap delete-other-windows] #'ace-delete-other-windows)
+
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to do persistent action
 (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
 (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
@@ -212,7 +213,6 @@
 (global-set-key (kbd "M-+") 'windmove-swap-states-right)
 (global-set-key (kbd "M-_") 'windmove-swap-states-left)
 
-
 (defun proj-comp()
   (interactive)
   (call-interactively #'projectile-compile-project)
@@ -232,6 +232,7 @@
   (switch-to-buffer-other-window "*compilation*"))
 
 (global-set-key (kbd "<f4>") 'open-with-designer)
+
 (global-set-key (kbd "<f5>") 'proj-comp)
 (global-set-key (kbd "<f6>") 'proj-conf)
 (global-set-key (kbd "<f7>") 'proj-run)
@@ -369,7 +370,6 @@
   (font-lock-add-keywords
    nil
    '(("\\<\\(\\sw+\\)?(" 1 'font-lock-function-name-face))))
-
 
 (defun my-c++-mode-hook ()
   (c-set-style "my-style")        ; use my-style defined above
