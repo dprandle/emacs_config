@@ -74,7 +74,7 @@
 
 (defun open-shared-notes()
   (interactive)
-  (find-file "~/.emacs.d/notes.md"))
+  (find-file "~/.emacs.d/notes.org"))
 
 (defun open-header-other-window()
   "Open header in other window"
@@ -397,18 +397,19 @@
     (save-excursion (goto-char (point-max)) (insert msg))
     (message "Compilation %s: %s" (string-trim-right why) msg)))
 
-(defun add-func-calls-to-name-face()
-  (font-lock-add-keywords
-   nil
-   '(("\\<\\(\\sw+\\)?(" 1 'font-lock-function-name-face))))
+;;(lsp-semantic-tokens-mode)
+(setq lsp-enable-symbol-highlighting nil)
+(setq lsp-semantic-tokens-enable t)
 
 (defun my-c++-mode-hook ()
   (c-set-style "my-style")        ; use my-style defined above
   (auto-fill-mode)         
   (c-toggle-auto-hungry-state -1)
-  ;; Remove the C-c C-p binding in c++-mode-map
-  (define-key c++-mode-map (kbd "C-c C-p") nil)
-  (add-func-calls-to-name-face))
+  ;; Remove the C-c C-* bindings in c++-mode-map that aren't needed
+  (define-key c++-mode-map (kbd "C-c C-n") nil) ;; go forward in preprocessor conditional
+  (define-key c++-mode-map (kbd "C-c C-l") nil) ;; toggle electric indentation mode
+  (define-key c++-mode-map (kbd "C-c C-k") nil) ;; toggle comment type // or /**/
+  (define-key c++-mode-map (kbd "C-c C-p") nil)) ;; don't remember
 
 (add-hook 'c-mode-hook 'my-c++-mode-hook)
 (add-hook 'c++-mode-hook 'my-c++-mode-hook)
@@ -503,7 +504,7 @@
  '(ansi-color-names-vector
    ["#242424" "#e5786d" "#95e454" "#cae682" "#8ac6f2" "#333366" "#ccaa8f" "#f6f3e8"])
  '(custom-safe-themes
-   '("2dd4951e967990396142ec54d376cced3f135810b2b69920e77103e0bcedfba9" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "51c71bb27bdab69b505d9bf71c99864051b37ac3de531d91fdad1598ad247138" "251ed7ecd97af314cd77b07359a09da12dcd97be35e3ab761d4a92d8d8cf9a71" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "2f8eadc12bf60b581674a41ddc319a40ed373dd4a7c577933acaff15d2bf7cc6" "631c52620e2953e744f2b56d102eae503017047fb43d65ce028e88ef5846ea3b" "636b135e4b7c86ac41375da39ade929e2bd6439de8901f53f88fde7dd5ac3561" "2dc03dfb67fbcb7d9c487522c29b7582da20766c9998aaad5e5b63b5c27eec3f" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "e09401ab2c457e2e4d8b800e1c546dbc8339dc33b2877836ba5d9b6294ae6e55" "0ed28b0694dd2c7a2407598e63650a8562b9e833a1a136ee74790a74d3776d3b" default))
+   '("443e2c3c4dd44510f0ea8247b438e834188dc1c6fb80785d83ad3628eadf9294" "89d9dc6f4e9a024737fb8840259c5dd0a140fd440f5ed17b596be43a05d62e67" "ce4234c32262924c1d2f43e6b61312634938777071f1129c7cde3ebd4a3028da" "b99e334a4019a2caa71e1d6445fc346c6f074a05fcbb989800ecbe54474ae1b0" "be84a2e5c70f991051d4aaf0f049fa11c172e5d784727e0b525565bb1533ec78" "1aa4243143f6c9f2a51ff173221f4fd23a1719f4194df6cef8878e75d349613d" "5586a5db9dadef93b6b6e72720205a4fa92fd60e4ccfd3a5fa389782eab2371b" "683b3fe1689da78a4e64d3ddfce90f2c19eb2d8ab1bab1738a63d8263119c3f4" "e3daa8f18440301f3e54f2093fe15f4fe951986a8628e98dcd781efbec7a46f2" "f458b92de1f6cf0bdda6bce23433877e94816c3364b821eb4ea9852112f5d7dc" "016f665c0dd5f76f8404124482a0b13a573d17e92ff4eb36a66b409f4d1da410" "49acd691c89118c0768c4fb9a333af33e3d2dca48e6f79787478757071d64e68" "7a424478cb77a96af2c0f50cfb4e2a88647b3ccca225f8c650ed45b7f50d9525" "512ce140ea9c1521ccaceaa0e73e2487e2d3826cc9d287275550b47c04072bc4" "bf948e3f55a8cd1f420373410911d0a50be5a04a8886cabe8d8e471ad8fdba8e" "2dd4951e967990396142ec54d376cced3f135810b2b69920e77103e0bcedfba9" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "51c71bb27bdab69b505d9bf71c99864051b37ac3de531d91fdad1598ad247138" "251ed7ecd97af314cd77b07359a09da12dcd97be35e3ab761d4a92d8d8cf9a71" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "2f8eadc12bf60b581674a41ddc319a40ed373dd4a7c577933acaff15d2bf7cc6" "631c52620e2953e744f2b56d102eae503017047fb43d65ce028e88ef5846ea3b" "636b135e4b7c86ac41375da39ade929e2bd6439de8901f53f88fde7dd5ac3561" "2dc03dfb67fbcb7d9c487522c29b7582da20766c9998aaad5e5b63b5c27eec3f" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "e09401ab2c457e2e4d8b800e1c546dbc8339dc33b2877836ba5d9b6294ae6e55" "0ed28b0694dd2c7a2407598e63650a8562b9e833a1a136ee74790a74d3776d3b" default))
  '(dap-mode t nil (dap-mode))
  '(ispell-dictionary nil)
  '(menu-bar-mode nil)
@@ -519,16 +520,21 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :background "#1e1e1e" :foreground "wheat1" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 132 :width normal :foundry "DAMA" :family "Ubuntu Mono"))))
- '(button ((t (:inherit link :foreground "#ce9178"))))
+ '(default ((t (:inherit nil :extend nil :stipple nil :background "#1e1e1e" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 132 :width normal :foundry "DAMA" :family "Ubuntu Mono"))))
+ '(button ((t (:inherit nil :underline t))))
  '(error ((t (:foreground "light pink" :weight bold))))
- '(font-lock-constant-face ((t (:foreground "#4ec9b0"))))
- '(font-lock-function-name-face ((t (:foreground "orange" :weight normal))))
- '(font-lock-keyword-face ((t (:foreground "#569cd6"))))
- '(font-lock-type-face ((t (:foreground "#4ec9b0" :weight normal))))
- '(font-lock-variable-name-face ((t (:foreground "#9cdcfe" :weight normal))))
+ '(font-lock-constant-face ((t (:foreground "#a6acd6"))))
+ '(font-lock-function-name-face ((t (:foreground "salmon" :weight bold))))
+ '(font-lock-keyword-face ((t (:foreground "#569cd6" :weight normal))))
+ '(font-lock-negation-char-face ((t (:foreground "#9cdcfe"))))
+ '(font-lock-type-face ((t (:foreground "#4ec9b0"))))
+ '(font-lock-variable-name-face ((t (:foreground "wheat1"))))
  '(highlight ((t (:foreground "orchid" :underline t))))
  '(lsp-face-highlight-read ((t (:foreground "#9cdcfe" :underline t))))
+ '(lsp-face-semhl-default-library ((t (:inherit nil))))
+ '(lsp-face-semhl-interface ((t nil)))
+ '(lsp-face-semhl-method ((t (:inherit lsp-face-semhl-function :weight normal))))
+ '(lsp-face-semhl-parameter ((t (:inherit font-lock-variable-name-face :foreground "#9cdcfe"))))
  '(success ((t (:foreground "lime green" :weight bold))))
  '(warning ((t (:foreground "orange" :weight bold)))))
 (put 'upcase-region 'disabled nil)
