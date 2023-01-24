@@ -37,6 +37,9 @@
 ;; highlight matching paren
 (show-paren-mode 1)
 
+;; Always follow symlinks and edit the source file without asking
+(setq vc-follow-symlinks t)
+
 (setq gc-cons-threshold (* 100 1024 1024)
       read-process-output-max (* 1024 1024)
       treemacs-space-between-root-nodes nil
@@ -63,6 +66,11 @@
 (defun open-settings ()
   (interactive)
   (find-file "~/.emacs"))
+
+(defun helm-mini-other-window()
+  (interactive)
+  (other-window 1)
+  (call-interactively #'helm-mini))
 
 (defun open-shared-notes()
   (interactive)
@@ -93,21 +101,40 @@
   (interactive)
   (shell-command (format "nohup designer %s </dev/null &>/dev/null &" (buffer-file-name))))
 
+(defun launch-qt-creator()
+  (interactive)
+  (shell-command (format "wmctrl -s 2 && nohup qtcreator %s </dev/null &>/dev/null &" (buffer-file-name)))
+  (kill-buffer "*Async Shell Command*"))
+
 (defun open-scratch-buffer()
   "Create or get scratch buffer"
   (interactive)
   (switch-to-buffer "*scratch*")
   (lisp-interaction-mode))
 
-(defun restart-debug()
+(defun kill-other-buffer()
+  "Kill the buffer in the other split"
+  (interactive)
+  (other-window 1)
+  (kill-this-buffer)
+  (other-window 1))
+
+(setq currently-debugging nil)
+(defun start-or-continue-debug()
   "Restart the debug session"
   (interactive)
-  (dap-debug-last))
+  (if (equal currently-debugging nil)
+      (progn 
+	(dap-delete-all-sessions)
+	(call-interactively #'dap-debug)
+	(setq currently-debugging t))
+    (call-interactively #'dap-continue)))
 
 (defun end-debug()
   "End the debug session and restore the windows"
   (interactive)
-  (dap-disconnect (dap--cur-session))
+  (dap-delete-all-sessions)
+  (setq currently-debugging nil)
   (reset-splits))
 
 (defun ui-file-handler ()
@@ -162,6 +189,7 @@
 ;; define custom keys..
 (global-set-key (kbd "M-s") 'isearch-forward-symbol-at-point)
 (global-set-key (kbd "M-k") 'kill-this-buffer)
+(global-set-key (kbd "M-K") 'kill-other-buffer)
 (global-set-key (kbd "M-:") 'xref-find-references)
 (global-set-key (kbd "M-j") 'xref-find-definitions)
 (global-set-key (kbd "M-J") 'find-definition-other-window)
@@ -191,6 +219,7 @@
 ;; Rebind/add bindings to a couple ctrl-x items - ones that seem like they should be there from the start
 (define-key ctl-x-map (kbd "C-S-f") 'find-file-other-window)
 (define-key ctl-x-map (kbd "C-b") 'helm-mini)
+(define-key ctl-x-map (kbd "C-S-b") 'helm-mini-other-window)
 (define-key ctl-x-map (kbd "b") 'list-buffers)
 (define-key ctl-x-map (kbd "f") 'projectile-find-file)
 (define-key ctl-x-map (kbd "F") 'projectile-find-file-other-window)
@@ -201,7 +230,7 @@
 (global-set-key (kbd "C-c C-,") 'open-settings)
 (global-set-key (kbd "C-c C-.") 'projectile-edit-dir-locals)
 (global-set-key (kbd "C-c C-p") 'projectile-switch-project)
-(global-set-key (kbd "C-c C-t") 'shell)
+(global-set-key (kbd "C-c C-t") 'eshell)
 (global-set-key (kbd "C-c g") 'magit-file-dispatch)
 
 ;; Multi cursor select
@@ -217,25 +246,29 @@
   (interactive)
   (call-interactively #'projectile-compile-project)
   (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*"))
+  (switch-to-buffer-other-window "*compilation*")
+  (other-window 1))
 
 (defun proj-conf()
   (interactive)
   (call-interactively #'projectile-configure-project)
   (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*"))
+  (switch-to-buffer-other-window "*compilation*")
+  (other-window 1))
 
 (defun proj-run()
   (interactive)
   (call-interactively #'projectile-run-project)
   (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*"))
+  (switch-to-buffer-other-window "*compilation*")
+  (other-window 1))
 
 (global-set-key (kbd "<f4>") 'open-with-designer)
 
 (global-set-key (kbd "<f5>") 'proj-comp)
 (global-set-key (kbd "<f6>") 'proj-conf)
 (global-set-key (kbd "<f7>") 'proj-run)
+(global-set-key (kbd "C-<f7>") 'launch-qt-creator)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 
 (define-key lsp-mode-map (kbd "M-;") 'lsp-ui-peek-find-references)
@@ -253,13 +286,11 @@
 (define-key lsp-mode-map (kbd "C-<f9>") 'dap-ui-breakpoints-browse)
 (define-key lsp-mode-map (kbd "C-S-<f9>") 'dap-ui-breakpoints-list)
 (define-key lsp-mode-map (kbd "C-M-S-<f9>") 'dap-breakpoint-delete-all)
-(define-key lsp-mode-map (kbd "C-<f10>") 'start-debug)
-(define-key lsp-mode-map (kbd "C-<f10>") 'dap-continue)
-(define-key lsp-mode-map (kbd "C-S-<f10>") 'restart-debug)
+(define-key lsp-mode-map (kbd "C-<f10>") 'start-or-continue-debug)
+(define-key lsp-mode-map (kbd "C-S-<f10>") 'end-debug)
 (define-key lsp-mode-map (kbd "<f10>") 'dap-next)
 (define-key lsp-mode-map (kbd "<f11>") 'dap-step-in)
 (define-key lsp-mode-map (kbd "<f12>") 'dap-step-out)
-(define-key lsp-mode-map (kbd "M-<f10>") 'end-debug)
 
 (setq projectile-project-search-path '("~/projects"))
 (projectile-discover-projects-in-search-path)
@@ -472,7 +503,7 @@
  '(ansi-color-names-vector
    ["#242424" "#e5786d" "#95e454" "#cae682" "#8ac6f2" "#333366" "#ccaa8f" "#f6f3e8"])
  '(custom-safe-themes
-   '("78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "e09401ab2c457e2e4d8b800e1c546dbc8339dc33b2877836ba5d9b6294ae6e55" "0ed28b0694dd2c7a2407598e63650a8562b9e833a1a136ee74790a74d3776d3b" default))
+   '("2dd4951e967990396142ec54d376cced3f135810b2b69920e77103e0bcedfba9" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "51c71bb27bdab69b505d9bf71c99864051b37ac3de531d91fdad1598ad247138" "251ed7ecd97af314cd77b07359a09da12dcd97be35e3ab761d4a92d8d8cf9a71" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "2f8eadc12bf60b581674a41ddc319a40ed373dd4a7c577933acaff15d2bf7cc6" "631c52620e2953e744f2b56d102eae503017047fb43d65ce028e88ef5846ea3b" "636b135e4b7c86ac41375da39ade929e2bd6439de8901f53f88fde7dd5ac3561" "2dc03dfb67fbcb7d9c487522c29b7582da20766c9998aaad5e5b63b5c27eec3f" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "e09401ab2c457e2e4d8b800e1c546dbc8339dc33b2877836ba5d9b6294ae6e55" "0ed28b0694dd2c7a2407598e63650a8562b9e833a1a136ee74790a74d3776d3b" default))
  '(dap-mode t nil (dap-mode))
  '(ispell-dictionary nil)
  '(menu-bar-mode nil)
@@ -481,14 +512,14 @@
  '(ns-command-modifier 'control)
  '(ns-control-modifier 'meta)
  '(package-selected-packages
-   '(iedit ace-window treemacs-projectile modern-cpp-font-lock clang-format lsp-mode lsp-ui yasnippet lsp-treemacs helm-lsp projectile hydra flycheck company avy which-key helm-xref dap-mode multiple-cursors))
+   '(spacemacs-theme doom-themes zenburn-theme iedit ace-window treemacs-projectile modern-cpp-font-lock clang-format lsp-mode lsp-ui yasnippet lsp-treemacs helm-lsp projectile hydra flycheck company avy which-key helm-xref dap-mode multiple-cursors))
  '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :background "#1e1e1e" :foreground "wheat1" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 132 :width normal :foundry "nil" :family "Ubuntu Mono"))))
+ '(default ((t (:inherit nil :extend nil :stipple nil :background "#1e1e1e" :foreground "wheat1" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 132 :width normal :foundry "DAMA" :family "Ubuntu Mono"))))
  '(button ((t (:inherit link :foreground "#ce9178"))))
  '(error ((t (:foreground "light pink" :weight bold))))
  '(font-lock-constant-face ((t (:foreground "#4ec9b0"))))
