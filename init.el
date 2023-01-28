@@ -21,9 +21,8 @@
 (global-set-key (kbd "M-s") 'isearch-forward-symbol-at-point)
 (global-set-key (kbd "M-k") 'kill-this-buffer)
 (global-set-key (kbd "M-K") 'kill-other-buffer)
-(global-set-key (kbd "M-:") 'xref-find-references)
 (global-set-key (kbd "M-j") 'xref-find-definitions)
-(global-set-key (kbd "M-J") 'find-definition-other-window)
+(global-set-key (kbd "M-J") 'xref-find-definitions-other-window)
 (global-set-key (kbd "M-\\") 'mark-paragraph)
 (global-set-key (kbd "M-|") 'my-reset-splits)
 (global-set-key (kbd "M-p") 'backward-paragraph)
@@ -42,7 +41,8 @@
 (global-set-key (kbd "C-c C-,") 'open-settings)
 (global-set-key (kbd "C-c ,") 'open-settings-funcs)
 (global-set-key (kbd "C-c C-r") 'reload-current-buffer)
-(global-set-key (kbd "C-c C-t") 'eshell)
+(global-set-key (kbd "C-c t e") 'eshell)
+(global-set-key (kbd "C-c C-t") 'shell)
 
 ;; Function
 (global-set-key (kbd "<f4>") 'open-with-designer)
@@ -94,7 +94,10 @@
       auto-save-file-name-transforms `((".*" ,"~/.emacs.d/backup/" t))
       split-window-preferred-function '(lambda () (nil)) ;; Don't ever split windows
       vc-follow-symlinks t
+      qt-version-in-use "6.3.0"
       c-default-style '((c-mode . "my-c-style") (c++-mode . "my-c-style"))) ;; Always follow symlinks and edit the source file without asking
+
+(setq-default qt-version-in-use "6.3.0")
 
 ;; Do all package stuff last so we don't poop our pants if it fails
 ;; Install use-package which is the main thing needed for all the other packages we are going to get
@@ -109,6 +112,7 @@
 
 ;; This is self-explanitory - just saves a bit of time
 (use-package restart-emacs
+  :bind (:map ctl-x-map ("z" . restart-emacs))
   :ensure t
   )
 
@@ -182,6 +186,7 @@
   :init
   (setq company-idle-delay 0.0)
   (setq company-minimum-prefix-length 1)
+  :bind (("C-." . company-complete))
   :config
   (global-company-mode)
   :ensure t)
@@ -218,8 +223,14 @@
 	 ([remap xref-find-definitions] . lsp-find-definition)
 	 ([remap xref-find-references] . lsp-find-references)
          ("M-;" . lsp-ui-peek-find-references)
-	 ( "C-:" . lsp-rename)
-	 ("C-c C-d" . lsp-ui-doc-glance))
+	 ("C-:" . lsp-rename)
+	 ("C-c d" . open-symbol-at-point-in-qt-web-doc)
+	 ("C-c C-d" . lsp-ui-doc-glance)
+         ("C-c m m a" . cpp-create-method-def-after)
+         ("C-c m m e" . cpp-create-method-def-at-end)
+         ("C-c m f a" . cpp-create-func-def-after)
+         ("C-c m f e" . cpp-create-func-def-at-end)
+         )
   :hook ((c++-mode . lsp)
 	 (c-mode . lsp)
 	 (python-mode . lsp)
@@ -248,6 +259,7 @@
 
 ;; Awesome interface to find anything in the directory files super super fast. Needs riggrep installed and added to the path.
 (use-package helm-rg
+  :bind ("C-c s" . helm-rg)
   :after (helm)
   :ensure t)
 
@@ -255,14 +267,14 @@
 ;; files 
 (use-package helm-projectile
   :commands (helm-projectile-switch-project helm-projectile-ag helm-projectile-find-file)
-  :bind (("C-S-s" . helm-projectile-rg)
+  :bind (("C-c C-s" . helm-projectile-rg)
 	 ("C-c C-p" . helm-projectile-switch-project)
 	 :map ctl-x-map
 	 ("f" . helm-projectile-find-file)
 	 ("F" . my-helm-projectile-find-file-other-window))
   :config
   (helm-projectile-on)
-  :after (helm projectile helm-rg)
+  :after (helm projectile)
   :ensure t)
 
 ;; Create TODO and other such tags. Tags can be added by customizing hl-todo-keyword-faces.
@@ -314,9 +326,13 @@
      ("FIXME" . "dark orange")
      ("DEBUG" . "steel blue")))
  '(hl-todo-require-punctuation nil)
+ '(indent-tabs-mode nil)
  '(ispell-dictionary nil)
  '(line-spacing 4)
  '(lsp-ui-doc-position 'at-point)
+ '(mc--reset-read-variables
+   '(mc--read-char-from-minibuffer mc--register-read-with-preview mc--read-quoted-char mc--read-char))
+ '(mc/always-run-for-all t)
  '(menu-bar-mode nil)
  '(modern-c++-preprocessors
    '("__STDCPP_STRICT_POINTER_SAFETY__" "#pragma STDC CX_LIMITED_RANGE" "__STDC_MB_MIGHT_NEQ_WC__" "#pragma STDC FP_CONTRACT" "#pragma STDC FENV_ACCESS" "__has_cpp_attribute" "__STDC_ISO_10646__" "__STDCPP_THREADS__" "__STDC_VERSION__" "__STDC_HOSTED__" "__has_include" "#pragma pack" "#pragma once" "__cplusplus" "__VA_ARGS__" "__VA_OPT__" "__TIME__" "__STDC__" "__LINE__" "__FILE__" "__DATE__" "#include" "#defined" "_Pragma" "#pragma" "#ifndef" "#define" "#undef" "#ifdef" "#error" "#endif" "#line" "#else" "#elif" "#if"))
@@ -324,6 +340,10 @@
  '(ns-control-modifier 'meta)
  '(package-selected-packages '(use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
+ '(safe-local-variable-values
+   '((qt-version-in-use . "6.2.3")
+     (qt-version-in-use . "6.3.0")
+     (qt-version-in-use . "6.3.1")))
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(window-combination-resize t))
@@ -336,6 +356,7 @@
  '(button ((t (:inherit nil :underline t))))
  '(company-tooltip ((t (:background "#252525"))))
  '(company-tooltip-selection ((t (:background "#04395e"))))
+ '(compilation-info ((t (:foreground "gray"))))
  '(cursor ((t (:background "green2"))))
  '(diff-file-header ((t (:inherit region :extend t :weight bold))))
  '(diff-header ((t (:inherit region :extend t))))

@@ -48,7 +48,10 @@
 
 (defun open-with-designer()
   (interactive)
-  (shell-command (format "nohup designer %s </dev/null &>/dev/null &" (buffer-file-name))))
+  (let ((ui-fname (concat (projectile-project-root) "/ui/" (file-name-base (buffer-file-name)) ".ui")))
+    (message "Opening ui file %s in qt designer" ui-fname)
+    (shell-command (format "nohup designer %s </dev/null &>/dev/null &" ui-fname)))
+    (kill-buffer "*Async Shell Command*"))
 
 (defun launch-qt-creator()
   (interactive)
@@ -92,14 +95,6 @@
 	      (switch-to-prev-buffer)
 	      nil)
 	  t))
-
-(defun find-definition-other-window()
-  "Follow definition under cursor in other window"
-  (interactive)
-  (setq fname (buffer-file-name))
-  (other-window 1)
-  (find-file fname)
-  (xref-find-definitions))
 
 (defun my-c++-mode-hook ()
 ;;  (c-set-style "my-style")        ; use my-style defined above
@@ -217,13 +212,32 @@
   (let ((buffer-read-only nil))
     (ansi-color-apply-on-region (point-min) (point-max))))
 
-;; Do this at a later time
-;; (defun send-current-point-to-qt-assistant
-;;     (let ((cur-process (get-process "assistant")))      
-;;       (if (cur-process) (progn)
-;; 	(progn
-;; 	  (make-process
-;; 	   :name "assistant"
-;; 	   :buffer nil
-;; 	   :command '("assistant" "-enableRemoteControl"))
-	  
+(defun open-symbol-at-point-in-qt-web-doc ()
+    (interactive)
+    (let ((cur-symbol (symbol-at-point)))
+      (if cur-symbol
+          (progn
+            (let* ((cur-symbol-str (downcase (format "\\`%s\\.html\\_>" cur-symbol)))
+                   (flist (directory-files-recursively (format "~/Qt/Docs/Qt-%s" qt-version-in-use) cur-symbol-str)))
+              (if flist
+                  (progn
+                    (message "Loading documentation for %s" cur-symbol)
+                    (other-window 1)
+                    (eww-browse-url (concat "file://" (expand-file-name (nth 0 flist)))))
+                (message "Symbol at point %s not found in Qt docs" cur-symbol))))
+        (message "No symbol at point"))))
+
+
+;; Here are all my custom macros
+
+(fset 'cpp-create-method-def-after
+   (kmacro-lambda-form [?\C-a tab ?\M-a ?\C-e ?\C-\M-p 134217802 ?\C-  ?\C-\M-b ?\M-w ?\C-\M-e return ?\C-y ?\C-x ?o ?\M-e ?\M-e ?\M-a ?\C-  ?\C-\M-f ?\M-w ?\C-x ?o ?\C-y ?\C-/ ?\C-a ?\C-y ?  ?\C-e ?\C-x ?o ?\C-f ?\C-  ?\C-e ?\M-w ?\C-a tab ?\C-x ?o ?\C-y backspace return ?\{ return ?\C-\M-e return ?\C-\M-a ?\C-n ?\C-n tab] 0 "%d"))
+
+(fset 'cpp-create-method-def-at-end
+      (kmacro-lambda-form [134217800 ?\C-a tab ?\C-  ?\C-e ?\M-w ?\C-\M-r ?^ ?c ?l ?a ?s ?s ?\\ ?| ?s ?t ?r ?u ?c ?t return ?\C-x ?o ?\M-> return ?\C-y backspace return ?\{ return ?\C-\M-a ?\C-x ?o ?\C-\M-f ?\C-f ?\C-  ?\C-\M-f ?\M-w ?\C-x ?o ?\C-\M-f ?\C-f ?\C-y ?: ?: ?\C-  ?\C-e ?\M-w ?\C-x ?o ?\C-s ?\C-y return ?\C-a tab ?\C-x ?o ?\C-a ?\C-n ?\C-n tab] 0 "%d"))
+
+(fset 'cpp-create-func-def-at-end
+   (kmacro-lambda-form [?\C-a tab 134217800 ?\C-  ?\C-e ?\M-w ?\C-a ?\C-x ?o ?\M-> return ?\C-y backspace return ?\{ return] 0 "%d"))
+
+(fset 'cpp-create-func-def-after
+   (kmacro-lambda-form [?\C-a tab ?\M-a ?\C-e ?\C-\M-p 134217802 ?\C-\M-e return ?\C-x ?o ?\M-e ?\M-e ?\M-a ?\C-  ?\C-e ?\M-w ?\C-a ?\C-x ?o ?\C-y backspace return ?\{ return ?\C-\M-e return ?\C-\M-a ?\C-n ?\C-n tab] 0 "%d"))
