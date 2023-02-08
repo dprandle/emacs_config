@@ -8,29 +8,100 @@
   (interactive)
   (find-file "~/.emacs"))
 
+;; overriding image.el function image-type-available-p until fix is out in emacs 29 for mac 
+(if (eq system-type 'darwin)
+    (defun image-type-available-p (type)
+      "Return t if image type TYPE is available.
+Image types are symbols like `xbm' or `jpeg'."
+      (if (eq 'svg type)
+          nil
+        (and (fboundp 'init-image-library)
+             (init-image-library type)))))
+
 (defun open-settings-funcs ()
   (interactive)
   (find-file "~/.emacs.d/lisp/custom_funcs.el"))
+
+(defun new-window-func-split-vert (func)
+  (split-window-below -25)
+  (other-window 1)
+  (funcall func))
+
+;; (defun toggle-dedicated-term ()
+;;   (interactive)
+;;   ;; (select-window (frame-root-window))
+;;   ;; (multi-term-dedicated-toggle))
+;;   (if (equal (buffer-name) "*terminal*")
+;;       (delete-window)
+;;     (progn 
+;;       (split-window (frame-root-window) -20)
+;;       (other-window 1)
+;;       (set-window-dedicated-p (selected-window) t)
+;;       (term "/bin/bash"))))
 
 (defun my-helm-mini-other-window()
   (interactive)
   (other-window 1)
   (call-interactively #'helm-mini))
 
-(defun open-shared-notes()
+(defun c-ptr-insert ()
+  "Type the ptr symbol"
   (interactive)
-  (find-file "~/.emacs.d/notes.org"))
+  (setq unread-command-events (listify-key-sequence "->")))
+
+(defun open-global-notes()
+  (interactive)
+  (find-file "~/org/notes.org"))
+
+(defun open-local-notes()
+  (interactive)
+  (find-file "~/org-local/notes.org"))
+
+(defun open-project-notes()
+  (interactive)
+  (let* ((proj-root (projectile-project-root))
+         (proj-name (projectile-default-project-name proj-root))
+         (sym-fname (format "%s.emacs/notes.org" proj-root proj-name))
+         (src-fname (expand-file-name (format "~/org/%s.org" proj-name))))
+    (when (not (file-exists-p src-fname))
+      (message "Creating new project notes file at %s" src-fname)
+      (make-empty-file src-fname))
+    (when (not (file-exists-p sym-fname))
+      (message "Creating symbolic link from %s to %s for project notes" sym-fname src-fname)
+      (make-symbolic-link src-fname sym-fname t))
+    (find-file sym-fname)))
+
+(defun create-cmake-project(proj_name)
+  (interactive "sEnter project name: ")
+  (copy-directory "~/.emacs.d/project_templates/cmake_unix" (concat "~/projects/" proj_name))
+  (find-file (concat "~/projects/" proj_name "/CMakeLists.txt"))
+  (while (re-search-forward "PROJ_NAME" nil t)
+    (replace-match proj_name t)))
+
+(defun my-find-file-other-window ()
+  (interactive)
+  (call-interactively 'helm-find-files)
+  (move-buffer-other-window))
 
 (defun open-header-other-window()
   "Open header in other window"
   (interactive)
-  (projectile-find-other-file-other-window)
+  (helm-projectile-find-other-file)
+  (move-buffer-other-window)
   (other-window 1))
+
+(defun move-buffer-other-window()
+  "Open header in other window"
+  (interactive)
+  (let ((cur-buf (window-buffer)))
+    (previous-buffer)
+    (other-window 1)
+    (switch-to-buffer cur-buf)))
 
 (defun my-helm-projectile-find-file-other-window()
   "Open file in other window"
   (interactive)
-  (other-window)
+  (other-window 1)
   (helm-projectile-find-file))
 
 (defun add-line-above()
@@ -48,15 +119,22 @@
 
 (defun open-with-designer()
   (interactive)
-  (let ((ui-fname (concat (projectile-project-root) "/ui/" (file-name-base (buffer-file-name)) ".ui")))
+  (let ((ui-fname (concat (projectile-project-root) "ui/" (file-name-base (buffer-file-name)) ".ui")))
     (message "Opening ui file %s in qt designer" ui-fname)
-    (shell-command (format "nohup designer %s </dev/null &>/dev/null &" ui-fname)))
-    (kill-buffer "*Async Shell Command*"))
+      (if (eq system-type 'darwin)
+          (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" ui-fname qt-version-in-use))
+        (progn
+          (async-shell-command (format "nohup designer %s &> /dev/null &" ui-fname)) ;; &> /dev/null redirects stdout and errout to null
+          (kill-buffer "*Async Shell Command*")))))
 
 (defun launch-qt-creator()
   (interactive)
-  (shell-command (format "nohup bash -c 'wmctrl -s 2 && nohup qtcreator %s' </dev/null &>/dev/null &" (buffer-file-name)))
-  (kill-buffer "*Async Shell Command*"))
+  (message "Opening Qt creator for debug")
+  (if (eq system-type 'darwin)
+      (shell-command (format "open %s -a \"$HOME/Qt/Qt Creator.app/Contents/MacOS/Qt Creator\"" (buffer-file-name)))
+    (progn 
+      (shell-command (format "nohup bash -c 'wmctrl -s 2 && nohup qtcreator %s' </dev/null &>/dev/null &" (buffer-file-name)))
+      (kill-buffer "*Async Shell Command*"))))
 
 (defun open-scratch-buffer()
   "Create or get scratch buffer"
@@ -84,7 +162,7 @@
   (when (and (stringp buffer-file-name)
              (string-match "\\.ui\\'" buffer-file-name))
     (switch-to-prev-buffer)
-    (shell-command (format "nohup designer %s </dev/null &>/dev/null &" (buffer-file-name)))
+    (async-shell-command (format "nohup designer %s &>/dev/null" (buffer-file-name)))
     (kill-buffer "*Async Shell Command*")
     (kill-buffer (get-file-buffer buffer-file-name))))
 
@@ -181,26 +259,31 @@
    (interactive "*p")
    (move-text-internal (- arg)))
 
+(defun proj-helper (projectile-func)
+  (let ((cur-buf-name (buffer-name)))
+    (call-interactively projectile-func)
+    (message "Compilation called with current buffer set as %s" cur-buf-name)
+    (if (equal cur-buf-name "*compilation*")
+        (progn
+          (message "Already in comp buffer - moving to end")
+          (end-of-buffer))
+      (progn ;; (else)
+        (message "Moving compilation to other window")
+        (move-buffer-other-window)
+        (end-of-buffer)
+        (other-window 1)))))
+
 (defun proj-comp()
   (interactive)
-  (call-interactively #'projectile-compile-project)
-  (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*")
-  (other-window 1))
+  (proj-helper #'projectile-compile-project))
 
 (defun proj-conf()
   (interactive)
-  (call-interactively #'projectile-configure-project)
-  (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*")
-  (other-window 1))
+  (proj-helper #'projectile-configure-project))
 
 (defun proj-run()
   (interactive)
-  (call-interactively #'projectile-run-project)
-  (switch-to-prev-buffer)
-  (switch-to-buffer-other-window "*compilation*")
-  (other-window 1))
+  (proj-helper #'projectile-run-project))
 
 ;; Dont whine if there is a terminal open
 (defun set-no-process-query-on-exit ()
@@ -211,6 +294,36 @@
 (defun my-ansi-colorize-buffer ()
   (let ((buffer-read-only nil))
     (ansi-color-apply-on-region (point-min) (point-max))))
+
+(defun open-symbol-at-point-in-mongo-doc ()
+    (interactive)
+    (let ((cur-symbol (symbol-at-point)))
+      (if cur-symbol
+          (progn
+            (message "Loading documentation for %s" cur-symbol)
+            (other-window 1)
+            (w3m-browse-url (concat "http://mongoc.org/libmongoc/current/" (downcase (format "%s" cur-symbol)) ".html")))
+        (message "No symbol at point"))))
+
+(defun open-symbol-at-point-in-bson-doc ()
+    (interactive)
+    (let ((cur-symbol (symbol-at-point)))
+      (if cur-symbol
+          (progn
+            (message "Loading documentation for %s" cur-symbol)
+            (other-window 1)
+            (w3m-browse-url (concat "http://mongoc.org/libbson/current/" (downcase (format "%s" cur-symbol)) ".html")))
+        (message "No symbol at point"))))
+
+;; (defun open-symbol-at-point-in-qt-web-doc ()
+;;     (interactive)
+;;     (let ((cur-symbol (symbol-at-point)))
+;;       (if cur-symbol
+;;           (progn
+;;             (message "Loading documentation for %s" cur-symbol)
+;;             (other-window 1)
+;;             (w3m-browse-url (concat "https://doc.qt.io/qt-6/" (downcase (format "%s" cur-symbol)) ".html")))
+;;         (message "No symbol at point"))))
 
 (defun open-symbol-at-point-in-qt-web-doc ()
     (interactive)
@@ -223,10 +336,15 @@
                   (progn
                     (message "Loading documentation for %s" cur-symbol)
                     (other-window 1)
-                    (eww-browse-url (concat "file://" (expand-file-name (nth 0 flist)))))
+                    (w3m-browse-url (concat "file://" (expand-file-name (nth 0 flist)))))
                 (message "Symbol at point %s not found in Qt docs" cur-symbol))))
         (message "No symbol at point"))))
 
+(defun start-trello-mode-if-needed ()
+  (interactive)
+   (let ((filename (buffer-file-name (current-buffer))))
+     (when (and filename (string= "trello" (file-name-extension filename)))
+       (org-trello-mode))))
 
 ;; Here are all my custom macros
 

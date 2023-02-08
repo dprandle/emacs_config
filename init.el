@@ -3,7 +3,8 @@
 ;; All of these bindings are for vanilla emacs functions, or functions I wrote that work with vanilla stuff
 ;; These are first so that when emacs doesn't load - don't lose all my key bindings and stuff
 ;; C-x
-(define-key ctl-x-map (kbd "C-S-f") 'find-file-other-window)
+(global-unset-key (kbd "C-z"))
+(define-key ctl-x-map (kbd "C-S-f") 'my-find-file-other-window)
 (define-key ctl-x-map (kbd "b") 'list-buffers)
 (define-key ctl-x-map (kbd ".") 'next-buffer)
 (define-key ctl-x-map (kbd "C-.") 'next-buffer)
@@ -16,6 +17,7 @@
 (global-set-key (kbd "C-S-m") 'add-line-below)
 (global-set-key (kbd "C->") 'next-error)
 (global-set-key (kbd "C-<") 'previous-error)
+(global-set-key (kbd "C-S-v") 'scroll-other-window)
 
 ;; M-
 (global-set-key (kbd "M-s") 'isearch-forward-symbol-at-point)
@@ -28,21 +30,26 @@
 (global-set-key (kbd "M-p") 'backward-paragraph)
 (global-set-key (kbd "M-n") 'forward-paragraph)
 (global-set-key (kbd "M-M") 'add-line-above)
-(global-set-key (kbd "M-+") 'windmove-swap-states-right)
-(global-set-key (kbd "M-_") 'windmove-swap-states-left)
+(global-set-key (kbd "M-+") 'move-buffer-other-window)
 (global-set-key (kbd "M-[") 'scroll-up-line)
 (global-set-key (kbd "M-]") 'scroll-down-line)
+(global-set-key (kbd "M-V") 'scroll-other-window-down)
+(global-set-key (kbd "M-S-v") 'scroll-other-window-down)
 (global-set-key (kbd "M-{") 'move-text-up)
 (global-set-key (kbd "M-}") 'move-text-down)
 
 ;; C-c
-(global-set-key (kbd "C-c C-m") 'open-scratch-buffer)
-(global-set-key (kbd "C-c C-n") 'open-shared-notes)
-(global-set-key (kbd "C-c C-,") 'open-settings)
-(global-set-key (kbd "C-c ,") 'open-settings-funcs)
-(global-set-key (kbd "C-c C-r") 'reload-current-buffer)
-(global-set-key (kbd "C-c t e") 'eshell)
-(global-set-key (kbd "C-c C-t") 'shell)
+(global-set-key (kbd "C-z C-m") 'open-scratch-buffer)
+(global-set-key (kbd "C-z n g") 'open-global-notes)
+(global-set-key (kbd "C-z n l") 'open-local-notes)
+(global-set-key (kbd "C-z n p") 'open-project-notes)
+(global-set-key (kbd "C-z C-,") 'open-settings)
+(global-set-key (kbd "C-z ,") 'open-settings-funcs)
+(global-set-key (kbd "C-z C-r") 'reload-current-buffer)
+(global-set-key (kbd "C-z t t") '(lambda () (interactive) (new-window-func-split-vert 'multi-term)))
+(global-set-key (kbd "C-z t e") '(lambda () (interactive) (new-window-func-split-vert 'eshell)))
+(global-set-key (kbd "C-z t s") '(lambda () (interactive) (new-window-func-split-vert 'shell)))
+(global-set-key (kbd "C-z C-t") 'multi-term-dedicated-toggle)
 
 ;; Function
 (global-set-key (kbd "<f4>") 'open-with-designer)
@@ -69,7 +76,6 @@
 (global-unset-key (kbd "C-x <C-right>"))
 (global-unset-key (kbd "C-x <left>"))
 (global-unset-key (kbd "C-x <right>"))
-(global-unset-key (kbd "C-z"))
 
 ;; Make two splits and fullscreen
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
@@ -104,6 +110,7 @@
 (require 'package)
 (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/") t)
 (package-initialize)
 
 (unless (package-installed-p 'use-package)
@@ -133,16 +140,18 @@
 	 ;; The persistant action is basically tab complete - change it so it matches what terms use
 	 ("C-i" . helm-execute-persistent-action)
 	 ("<tab>" . helm-execute-persistent-action)
-	 ("C-z" . helm-select-action))
+	 ("C-z C-a" . helm-select-action))
   :demand t
   :ensure t)
 
 ;; Projectile for project management - use helm-projectile for the extra actions on files so only a few key bindings here
 (use-package projectile
   :bind-keymap ("C-c p" . projectile-command-map)
-  :bind (("C-c C-." . projectile-edit-dir-locals)
+  :bind (("C-z C-." . projectile-edit-dir-locals)
 	 ("M-h" . projectile-find-other-file)
-	 ("M-H" . open-header-other-window))
+	 ("M-H" . open-header-other-window)
+         :map projectile-command-map
+         ("n" . create-cmake-project))
   :init
   (setq projectile-project-search-path '("~/projects")
 	projectile-switch-project-action #'projectile-dired)
@@ -224,13 +233,17 @@
 	 ([remap xref-find-references] . lsp-find-references)
          ("M-;" . lsp-ui-peek-find-references)
 	 ("C-:" . lsp-rename)
-	 ("C-c d" . open-symbol-at-point-in-qt-web-doc)
+	 ("C-c d q" . open-symbol-at-point-in-qt-web-doc)
+	 ("C-c d m" . open-symbol-at-point-in-mongo-doc)
+	 ("C-c d b" . open-symbol-at-point-in-bson-doc)
 	 ("C-c C-d" . lsp-ui-doc-glance)
-         ("C-c m m a" . cpp-create-method-def-after)
-         ("C-c m m e" . cpp-create-method-def-at-end)
-         ("C-c m f a" . cpp-create-func-def-after)
-         ("C-c m f e" . cpp-create-func-def-at-end)
-         )
+         ("C-z m m a" . cpp-create-method-def-after)
+         ("C-z m m e" . cpp-create-method-def-at-end)
+         ("C-z m f a" . cpp-create-func-def-after)
+         ("C-z m f e" . cpp-create-func-def-at-end)
+         ("C-c f" . helm-lsp-workspace-symbol)
+	 ("C-c a" . helm-lsp-code-actions)
+         ("C-c C-." . c-ptr-insert))
   :hook ((c++-mode . lsp)
 	 (c-mode . lsp)
 	 (python-mode . lsp)
@@ -244,12 +257,8 @@
   :after (lsp)
   :ensure t)
 
-;; This gives us the JIT autocompleteino for symbols in the entire workspace instead of just the file
 (use-package helm-lsp
-  :commands helm-lsp-workspace-symbol
-  :bind (("C-c f" . helm-lsp-workspace-symbol)
-	 ("C-c a" . heml-lsp-code-actions))
-  :after (helm lsp)
+  :commands (helm-lsp-workspace-symbol helm-lsp-code-actions)
   :ensure t)
 
 ;; Honestly, not too sure how this changes the xref displays but being consistant and sticking with helm for everything.
@@ -286,10 +295,55 @@
 ;; Shows the generated tags from hl-todo in magit status
 (use-package magit-todos
   :commands (helm-magit-todos magit-todos-mode)
-  :bind ("C-c t t" . helm-magit-todos)
+  :bind ("C-c t" . helm-magit-todos)
   :hook (magit-mode . magit-todos-mode)
   :after (helm magit)
   :ensure t)
+
+;; Use cmake-mode to highlight cmake sources
+(use-package cmake-mode
+  :ensure t)
+
+(use-package org
+  :mode ("\\.trello\\'" . org-mode)
+  :hook (org-mode . (lambda () (set (make-local-variable 'split-window-preferred-function) 'split-window-sensibly)))
+  :ensure t)
+
+(use-package org-trello
+  :hook (org-mode . start-trello-mode-if-needed)
+  :custom
+  (org-trello-current-prefix-keybinding "C-c o" "Default keybinding")
+  :ensure t)
+
+(use-package w3m
+  :bind
+  (:map w3m-mode-map
+        ("M-k" . nil)
+        ("M-n" . nil))
+  :ensure t)
+
+(use-package highlight-indent-guides
+  :hook (prog-mode . 'highlight-indent-guides)
+  :ensure t)
+
+(use-package ace-window
+  :bind ("M-o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  :ensure t
+  )
+
+(use-package multi-term
+  :ensure t)
+
+(use-package dprandle-dark-theme
+  :load-path "lisp/themes"
+  :hook (after-init . (lambda ()
+                        (load-theme 'dprandle-dark t)
+                        (if (equal system-name "dprandle-hp")
+                            (set-face-attribute 'default nil :height 132))
+                        (if (eq system-type 'darwin)
+                            (set-face-attribute 'default nil :family "Menlo" :height 112)))))
 
 ;; Here are all of the hoods - the functions are in custom funcs file
 (add-hook 'kill-buffer-query-functions 'my-unkillable-scratch-buffer)
@@ -301,20 +355,36 @@
 (add-hook 'compilation-start-hook #'my-compilation-start-hook)
 (add-hook 'compilation-finish-functions #'my-compilation-finish-function)
 (add-hook 'compilation-filter-hook 'my-ansi-colorize-buffer)
+(add-hook 'shell-mode-hook 'my-ansi-colorize-buffer)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(company-clang-arguments nil)
  '(company-idle-delay 0.0)
  '(company-minimum-prefix-length 1)
+ '(custom-safe-themes t)
+ '(custom-theme-directory "~/.emacs.d/lisp/themes")
+ '(dired-dwim-target 'dired-dwim-target-next)
  '(display-line-numbers nil)
  '(fill-column 140)
  '(git-commit-fill-column 70)
  '(global-company-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-todo-mode t)
+ '(highlight-indent-guides-auto-even-face-perc 15)
+ '(highlight-indent-guides-auto-odd-face-perc 10)
+ '(highlight-indent-guides-auto-stack-character-face-perc 30)
+ '(highlight-indent-guides-auto-stack-even-face-perc 30)
+ '(highlight-indent-guides-auto-stack-odd-face-perc 25)
+ '(highlight-indent-guides-auto-top-character-face-perc 40)
+ '(highlight-indent-guides-auto-top-even-face-perc 40)
+ '(highlight-indent-guides-auto-top-odd-face-perc 35)
+ '(highlight-indent-guides-bitmap-function 'highlight-indent-guides--bitmap-dots)
+ '(highlight-indent-guides-method 'bitmap)
+ '(highlight-indent-guides-responsive 'stack)
  '(hl-todo-color-background nil)
  '(hl-todo-highlight-punctuation ":")
  '(hl-todo-keyword-faces
@@ -329,22 +399,51 @@
  '(indent-tabs-mode nil)
  '(ispell-dictionary nil)
  '(line-spacing 4)
+ '(lsp-clients-clangd-args '("--header-insertion=never"))
  '(lsp-ui-doc-position 'at-point)
+ '(magit-todos-scanner 'magit-todos--scan-with-rg)
  '(mc--reset-read-variables
    '(mc--read-char-from-minibuffer mc--register-read-with-preview mc--read-quoted-char mc--read-char))
  '(mc/always-run-for-all t)
  '(menu-bar-mode nil)
  '(modern-c++-preprocessors
    '("__STDCPP_STRICT_POINTER_SAFETY__" "#pragma STDC CX_LIMITED_RANGE" "__STDC_MB_MIGHT_NEQ_WC__" "#pragma STDC FP_CONTRACT" "#pragma STDC FENV_ACCESS" "__has_cpp_attribute" "__STDC_ISO_10646__" "__STDCPP_THREADS__" "__STDC_VERSION__" "__STDC_HOSTED__" "__has_include" "#pragma pack" "#pragma once" "__cplusplus" "__VA_ARGS__" "__VA_OPT__" "__TIME__" "__STDC__" "__LINE__" "__FILE__" "__DATE__" "#include" "#defined" "_Pragma" "#pragma" "#ifndef" "#define" "#undef" "#ifdef" "#error" "#endif" "#line" "#else" "#elif" "#if"))
+ '(multi-term-dedicated-close-back-to-open-buffer-p nil)
+ '(multi-term-dedicated-max-window-height 30)
+ '(multi-term-dedicated-select-after-open-p t)
+ '(multi-term-dedicated-skip-other-window-p t)
+ '(multi-term-dedicated-window-height 25)
+ '(multi-term-scroll-show-maximum-output nil)
+ '(multi-term-switch-after-close nil)
  '(ns-command-modifier 'control)
- '(ns-control-modifier 'meta)
- '(package-selected-packages '(use-package))
+ '(ns-control-modifier 'super)
+ '(org-agenda-files '("~/org" "~/org-local"))
+ '(org-agenda-window-frame-fractions '(0.1 . 0.75))
+ '(org-agenda-window-setup 'current-window)
+ '(org-enforce-todo-checkbox-dependencies t)
+ '(org-enforce-todo-dependencies t)
+ '(org-todo-keyword-faces
+   '(("IN-PROGRESS" . "violet")
+     ("DONE" . "green")
+     ("TODO" . "yellow")
+     ("CANCELLED" . "#cc9393")
+     ("ISSUE" . "dark orange")
+     ("BUG" . "red")
+     ("FIXED" . "green")))
+ '(org-todo-keywords
+   '((sequence "TODO(t!)" "IN-PROGRESS(p!)" "|" "DONE(d@)" "CANCELLED(c@)")
+     (sequence "ISSUE(i!)" "BUG(b@)" "|" "FIXED(f@)" "RESOLVED(r@)")))
+ '(org-trello-add-tags t nil (org-trello))
+ '(org-trello-current-prefix-keybinding "C-c o" nil (org-trello))
+ '(org-trello-input-completion-mechanism 'helm nil (org-trello))
+ '(package-selected-packages '(vscode-dark-plus-theme use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
  '(safe-local-variable-values
    '((qt-version-in-use . "6.2.3")
      (qt-version-in-use . "6.3.0")
      (qt-version-in-use . "6.3.1")))
  '(show-paren-mode t)
+ '(term-unbind-key-list '("C-z" "C-x" "C-h" "C-y" "<ESC>"))
  '(tool-bar-mode nil)
  '(window-combination-resize t))
 (custom-set-faces
@@ -352,55 +451,11 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :background "#1e1e1e" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 126 :width normal :foundry "DAMA" :family "Ubuntu Mono"))))
- '(button ((t (:inherit nil :underline t))))
- '(company-tooltip ((t (:background "#252525"))))
- '(company-tooltip-selection ((t (:background "#04395e"))))
- '(compilation-info ((t (:foreground "gray"))))
- '(cursor ((t (:background "green2"))))
- '(diff-file-header ((t (:inherit region :extend t :weight bold))))
- '(diff-header ((t (:inherit region :extend t))))
- '(ediff-current-diff-C ((t (:extend t :background "DarkOrange4"))))
- '(ediff-even-diff-A ((t (:inherit highlight :extend t))))
- '(ediff-even-diff-Ancestor ((t (:inherit highlight :extend t))))
- '(ediff-even-diff-B ((t (:inherit highlight :extend t))))
- '(ediff-even-diff-C ((t (:inherit highlight :extend t))))
- '(ediff-odd-diff-A ((t (:inherit region :extend t))))
- '(ediff-odd-diff-Ancestor ((t (:inherit highlight :extend t))))
- '(ediff-odd-diff-B ((t (:inherit region :extend t))))
- '(ediff-odd-diff-C ((t (:inherit region :extend t))))
- '(font-lock-builtin-face ((t (:foreground "orchid"))))
- '(font-lock-comment-face ((t (:foreground "#6A9955"))))
- '(font-lock-constant-face ((t (:foreground "#4FC1FF"))))
- '(font-lock-function-name-face ((t (:foreground "salmon" :weight bold))))
- '(font-lock-keyword-face ((t (:foreground "#569cd6" :weight normal))))
- '(font-lock-negation-char-face ((t (:foreground "#9cdcfe"))))
- '(font-lock-string-face ((t (:foreground "#CE9178"))))
- '(font-lock-type-face ((t (:foreground "#4ec9b0"))))
- '(font-lock-variable-name-face ((t (:foreground "wheat1"))))
- '(highlight ((t (:foreground "orchid" :underline t))))
  '(hl-todo ((t (:weight bold))))
- '(lsp-face-highlight-read ((t (:foreground "#9cdcfe" :underline t))))
- '(lsp-face-semhl-default-library ((t (:inherit nil))))
- '(lsp-face-semhl-interface ((t nil)))
- '(lsp-face-semhl-keyword ((t nil)))
- '(lsp-face-semhl-method ((t (:inherit lsp-face-semhl-function :weight normal))))
- '(lsp-face-semhl-parameter ((t (:inherit font-lock-variable-name-face :foreground "#9cdcfe"))))
- '(lsp-ui-peek-filename ((t (:foreground "seashell1" :weight bold))))
- '(lsp-ui-peek-header ((t (:background "#1a1a1a" :foreground "seashell1" :box (:line-width 2 :color "#3794FF") :weight bold))))
- '(lsp-ui-peek-highlight ((t (:background "DarkOrange4"))))
- '(lsp-ui-peek-line-number ((t (:foreground "gray70"))))
- '(lsp-ui-peek-list ((t (:background "#191919"))))
- '(lsp-ui-peek-peek ((t (:background "#001F33"))))
- '(lsp-ui-peek-selection ((t (:inherit region))))
- '(magit-blame-highlight ((t (:inherit region :extend t))))
- '(magit-diff-hunk-heading ((t (:inherit region :extend t))))
- '(magit-diff-hunk-heading-highlight ((t (:inherit highlight :extend t))))
- '(magit-section-highlight ((t (:inherit region))))
- '(mc/cursor-face ((t (:inherit cursor :foreground "black"))))
- '(region ((t (:extend t :background "#264f78"))))
  '(show-paren-match ((t (:foreground "green"))))
- '(show-paren-mismatch ((t (:foreground "red")))))
+ '(show-paren-mismatch ((t (:foreground "red"))))
+ '(term-color-black ((t (:background "dim gray" :foreground "dim gray"))))
+ '(term-color-blue ((t (:background "dodger blue" :foreground "dodger blue")))))
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
@@ -408,3 +463,6 @@
 ;; These need to go last because the above changes default font - this will change for mac and linux
 (if (eq system-type 'darwin)
     (set-face-attribute 'default nil :family "Menlo" :height 112))
+
+(if (eq system-name 'dprandle-hp)
+    (set-face-attribute 'default nil :height 150))
