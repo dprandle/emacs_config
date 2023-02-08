@@ -364,17 +364,6 @@
  '(global-company-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-todo-mode t)
- '(highlight-indent-guides-auto-even-face-perc 15)
- '(highlight-indent-guides-auto-odd-face-perc 10)
- '(highlight-indent-guides-auto-stack-character-face-perc 30)
- '(highlight-indent-guides-auto-stack-even-face-perc 30)
- '(highlight-indent-guides-auto-stack-odd-face-perc 25)
- '(highlight-indent-guides-auto-top-character-face-perc 40)
- '(highlight-indent-guides-auto-top-even-face-perc 40)
- '(highlight-indent-guides-auto-top-odd-face-perc 35)
- '(highlight-indent-guides-bitmap-function 'highlight-indent-guides--bitmap-dots)
- '(highlight-indent-guides-method 'bitmap)
- '(highlight-indent-guides-responsive 'stack)
  '(hl-todo-color-background nil)
  '(hl-todo-highlight-punctuation ":")
  '(hl-todo-keyword-faces
@@ -423,9 +412,6 @@
  '(org-todo-keywords
    '((sequence "TODO(t!)" "IN-PROGRESS(p!)" "|" "DONE(d@)" "CANCELLED(c@)")
      (sequence "ISSUE(i!)" "BUG(b@)" "|" "FIXED(f@)" "RESOLVED(r@)")))
- '(org-trello-add-tags t nil (org-trello))
- '(org-trello-current-prefix-keybinding "C-c o" nil (org-trello))
- '(org-trello-input-completion-mechanism 'helm nil (org-trello))
  '(package-selected-packages '(vscode-dark-plus-theme use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
  '(safe-local-variable-values
