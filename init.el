@@ -309,21 +309,11 @@
   :hook (org-mode . (lambda () (set (make-local-variable 'split-window-preferred-function) 'split-window-sensibly)))
   :ensure t)
 
-(use-package org-trello
-  :hook (org-mode . start-trello-mode-if-needed)
-  :custom
-  (org-trello-current-prefix-keybinding "C-c o" "Default keybinding")
-  :ensure t)
-
 (use-package w3m
   :bind
   (:map w3m-mode-map
         ("M-k" . nil)
         ("M-n" . nil))
-  :ensure t)
-
-(use-package highlight-indent-guides
-  :hook (prog-mode . 'highlight-indent-guides)
   :ensure t)
 
 (use-package ace-window

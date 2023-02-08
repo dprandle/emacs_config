@@ -27,18 +27,6 @@ Image types are symbols like `xbm' or `jpeg'."
   (other-window 1)
   (funcall func))
 
-;; (defun toggle-dedicated-term ()
-;;   (interactive)
-;;   ;; (select-window (frame-root-window))
-;;   ;; (multi-term-dedicated-toggle))
-;;   (if (equal (buffer-name) "*terminal*")
-;;       (delete-window)
-;;     (progn 
-;;       (split-window (frame-root-window) -20)
-;;       (other-window 1)
-;;       (set-window-dedicated-p (selected-window) t)
-;;       (term "/bin/bash"))))
-
 (defun my-helm-mini-other-window()
   (interactive)
   (other-window 1)
