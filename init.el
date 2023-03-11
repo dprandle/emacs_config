@@ -15,8 +15,6 @@
 (global-set-key (kbd "C-|") 'balance-windows)
 (global-set-key (kbd "C-\\") 'split-window-right)
 (global-set-key (kbd "C-S-m") 'add-line-below)
-(global-set-key (kbd "C->") 'next-error)
-(global-set-key (kbd "C-<") 'previous-error)
 (global-set-key (kbd "C-S-v") 'scroll-other-window)
 
 ;; M-
@@ -39,6 +37,11 @@
 (global-set-key (kbd "M-}") 'move-text-down)
 
 ;; C-c
+(global-set-key (kbd "C-c C-;") 'comment-dwim)
+(global-set-key (kbd "C-c C-k") 'my-kill-line)
+(global-set-key (kbd "C-c C-l") 'copy-line)
+
+;; C-z
 (global-set-key (kbd "C-z C-m") 'open-scratch-buffer)
 (global-set-key (kbd "C-z n g") 'open-global-notes)
 (global-set-key (kbd "C-z n l") 'open-local-notes)
@@ -46,9 +49,9 @@
 (global-set-key (kbd "C-z C-,") 'open-settings)
 (global-set-key (kbd "C-z ,") 'open-settings-funcs)
 (global-set-key (kbd "C-z C-r") 'reload-current-buffer)
-(global-set-key (kbd "C-z t t") '(lambda () (interactive) (new-window-func-split-vert 'multi-term)))
-(global-set-key (kbd "C-z t e") '(lambda () (interactive) (new-window-func-split-vert 'eshell)))
-(global-set-key (kbd "C-z t s") '(lambda () (interactive) (new-window-func-split-vert 'shell)))
+(global-set-key (kbd "C-z t t") #'(lambda () (interactive) (new-window-func-split-vert 'multi-term)))
+(global-set-key (kbd "C-z t e") #'(lambda () (interactive) (new-window-func-split-vert 'eshell)))
+(global-set-key (kbd "C-z t s") #'(lambda () (interactive) (new-window-func-split-vert 'shell)))
 (global-set-key (kbd "C-z C-t") 'multi-term-dedicated-toggle)
 
 ;; Function
@@ -92,7 +95,28 @@
 
 ;; Since clang format is used, really don't need much other than 4 space tab
 (defconst my-c-style
-  '((c-basic-offset . 4)))
+  '((c-basic-offset . 4)
+    (c-offsets-alist
+     (topmost-intro . 0)
+     (cpp-define-intro . +)
+     (defun-open . 0)
+     (defun-block-intro . +)
+     (statement . 0)
+     (statement-block-intro . +)
+     (block-close . 0)
+     (substatement . +)
+     (defun-close . 0)
+     (else-clause . 0)
+     (namespace-open . 0)
+     (innamespace . 0)
+     (namespace-close . 0)
+     (c . c-lineup-C-comments)
+     (inher-cont . c-lineup-multi-inher)
+     (string . -1000)
+     (comment-intro . c-lineup-comment)
+     (arglist-cont-nonempty . c-lineup-arglist)
+     (arglist-close . c-lineup-close-paren)
+     (cpp-macro . -1000))))
 (c-add-style "my-c-style" my-c-style)
 
 ;; Set the default vars
@@ -101,6 +125,7 @@
       split-window-preferred-function '(lambda () (nil)) ;; Don't ever split windows
       vc-follow-symlinks t
       qt-version-in-use "6.3.0"
+      org-latex-to-pdf-process (list "latexmk -pdf %f")
       c-default-style '((c-mode . "my-c-style") (c++-mode . "my-c-style"))) ;; Always follow symlinks and edit the source file without asking
 
 (setq-default qt-version-in-use "6.3.0")
@@ -130,6 +155,7 @@
   :config
   (helm-mode)
   :bind (("C-c C-f" . helm-imenu)
+         ("C-S-s" . helm-occur)
 	 ([remap find-file] . helm-find-files)
 	 ([remap execute-extended-command] . helm-M-x)
 	 ([remap switch-to-buffer] . helm-mini)
@@ -170,11 +196,6 @@
 (use-package iedit
   :ensure t)
 
-;; This just adds some modern cpp keywords to syntax highlighting
-(use-package modern-cpp-font-lock
-  :hook (c++-mode . modern-c++-font-lock-mode)
-  :ensure t)
-
 ;; Only git interface worth its salt (and vscode's)
 (use-package magit
   :commands (magit-status)
@@ -195,15 +216,9 @@
   :init
   (setq company-idle-delay 0.0)
   (setq company-minimum-prefix-length 1)
-  :bind (("C-." . company-complete))
+  :bind (("C-c C-." . company-complete))
   :config
   (global-company-mode)
-  :ensure t)
-
-;; Use .clang-format file (if found somewhere in dir structure for file being edited) and clang-format to format the code.
-(use-package clang-format
-  :bind (("M-i" . clang-format)
-	 ("M-I" . clang-format-buffer))
   :ensure t)
 
 ;; Add multiple cursors - similar to iedit but can be more useful at times
@@ -243,7 +258,9 @@
          ("C-z m f e" . cpp-create-func-def-at-end)
          ("C-c f" . helm-lsp-workspace-symbol)
 	 ("C-c a" . helm-lsp-code-actions)
-         ("C-c C-." . c-ptr-insert))
+         ("M-i" . lsp-format-region)
+         ("M-I" . lsp-format-buffer)
+         ("C-." . c-ptr-insert))
   :hook ((c++-mode . lsp)
 	 (c-mode . lsp)
 	 (python-mode . lsp)
@@ -306,7 +323,9 @@
 
 (use-package org
   :mode ("\\.trello\\'" . org-mode)
-  :hook (org-mode . (lambda () (set (make-local-variable 'split-window-preferred-function) 'split-window-sensibly)))
+  :hook (org-mode . (lambda ()
+                      (set (make-local-variable 'split-window-preferred-function) 'split-window-sensibly)
+                      (visual-line-mode)))
   :ensure t)
 
 (use-package w3m
@@ -324,6 +343,13 @@
   )
 
 (use-package multi-term
+  :ensure t)
+
+(use-package wgrep
+  :ensure t)
+
+(use-package wgrep-helm
+  :after (helm wgrep)
   :ensure t)
 
 (use-package dprandle-dark-theme
@@ -359,7 +385,7 @@
  '(custom-theme-directory "~/.emacs.d/lisp/themes")
  '(dired-dwim-target 'dired-dwim-target-next)
  '(display-line-numbers nil)
- '(fill-column 140)
+ '(fill-column 120)
  '(git-commit-fill-column 70)
  '(global-company-mode t)
  '(global-display-line-numbers-mode t)
@@ -385,13 +411,11 @@
    '(mc--read-char-from-minibuffer mc--register-read-with-preview mc--read-quoted-char mc--read-char))
  '(mc/always-run-for-all t)
  '(menu-bar-mode nil)
- '(modern-c++-preprocessors
-   '("__STDCPP_STRICT_POINTER_SAFETY__" "#pragma STDC CX_LIMITED_RANGE" "__STDC_MB_MIGHT_NEQ_WC__" "#pragma STDC FP_CONTRACT" "#pragma STDC FENV_ACCESS" "__has_cpp_attribute" "__STDC_ISO_10646__" "__STDCPP_THREADS__" "__STDC_VERSION__" "__STDC_HOSTED__" "__has_include" "#pragma pack" "#pragma once" "__cplusplus" "__VA_ARGS__" "__VA_OPT__" "__TIME__" "__STDC__" "__LINE__" "__FILE__" "__DATE__" "#include" "#defined" "_Pragma" "#pragma" "#ifndef" "#define" "#undef" "#ifdef" "#error" "#endif" "#line" "#else" "#elif" "#if"))
  '(multi-term-dedicated-close-back-to-open-buffer-p nil)
- '(multi-term-dedicated-max-window-height 30)
+ '(multi-term-dedicated-max-window-height 50)
  '(multi-term-dedicated-select-after-open-p t)
  '(multi-term-dedicated-skip-other-window-p t)
- '(multi-term-dedicated-window-height 25)
+ '(multi-term-dedicated-window-height 50)
  '(multi-term-scroll-show-maximum-output nil)
  '(multi-term-switch-after-close nil)
  '(ns-command-modifier 'control)
@@ -401,23 +425,36 @@
  '(org-agenda-window-setup 'current-window)
  '(org-enforce-todo-checkbox-dependencies t)
  '(org-enforce-todo-dependencies t)
+ '(org-export-with-sub-superscripts '{})
+ '(org-image-actual-width nil)
+ '(org-latex-listings 'minted)
+ '(org-latex-minted-options
+   '(("style" "perldoc")
+     ("frame" "lines")
+     ("framesep" "2mm")
+     ("breaklines" "")
+     ("fontsize" "\\scriptsize")))
+ '(org-latex-pdf-process '("latexmk -f -pdf -shell-escape -output-directory=%o %f"))
  '(org-todo-keyword-faces
    '(("IN-PROGRESS" . "violet")
      ("DONE" . "green")
      ("TODO" . "yellow")
      ("CANCELLED" . "#cc9393")
-     ("ISSUE" . "dark orange")
+     ("ISSUE" . "#ff2222")
      ("BUG" . "red")
      ("FIXED" . "green")))
  '(org-todo-keywords
    '((sequence "TODO(t!)" "IN-PROGRESS(p!)" "|" "DONE(d@)" "CANCELLED(c@)")
      (sequence "ISSUE(i!)" "BUG(b@)" "|" "FIXED(f@)" "RESOLVED(r@)")))
+ '(org-trello-current-prefix-keybinding "C-c o")
  '(package-selected-packages '(vscode-dark-plus-theme use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
  '(safe-local-variable-values
-   '((qt-version-in-use . "6.2.3")
+   '((qt-version-in-use . 6\.4\.2)
+     (qt-version-in-use . "6.2.3")
      (qt-version-in-use . "6.3.0")
      (qt-version-in-use . "6.3.1")))
+ '(sentence-end-double-space nil)
  '(show-paren-mode t)
  '(term-unbind-key-list '("C-z" "C-x" "C-h" "C-y" "<ESC>"))
  '(tool-bar-mode nil)
@@ -428,6 +465,8 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(hl-todo ((t (:weight bold))))
+ '(mode-line ((t (:background "orange" :foreground "black" :box (:line-width -1 :style released-button)))))
+ '(outline-2 ((t (:inherit font-lock-variable-name-face :foreground "dark orange"))))
  '(show-paren-match ((t (:foreground "green"))))
  '(show-paren-mismatch ((t (:foreground "red"))))
  '(term-color-black ((t (:background "dim gray" :foreground "dim gray"))))
