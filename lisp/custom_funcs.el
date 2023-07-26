@@ -45,6 +45,13 @@ Image types are symbols like `xbm' or `jpeg'."
   (other-window 1)
   (funcall func))
 
+(defun my-shell-mode-setup-function ()
+  (set-no-process-query-on-exit)
+  (my-ansi-colorize-buffer)
+  (when (and (fboundp 'company-mode)
+             (file-remote-p default-directory))
+    (company-mode -1)))
+
 (defun my-helm-mini-other-window()
   (interactive)
   (other-window 1)
@@ -59,15 +66,19 @@ Image types are symbols like `xbm' or `jpeg'."
   (interactive)
   (find-file "~/org/notes.org"))
 
+(defun open-journal-notes()
+  (interactive)
+  (find-file "~/org/journal.org"))
+
 (defun open-local-notes()
   (interactive)
   (find-file "~/org-local/notes.org"))
 
-(defun open-project-notes()
+(defun open-project-todo()
   (interactive)
   (let* ((proj-root (projectile-project-root))
          (proj-name (projectile-default-project-name proj-root))
-         (sym-fname (format "%s.emacs/notes.org" proj-root proj-name))
+         (sym-fname (format "%s.emacs/todo.org" proj-root proj-name))
          (src-fname (expand-file-name (format "~/org/%s.org" proj-name))))
     (when (not (file-exists-p src-fname))
       (message "Creating new project notes file at %s" src-fname)
@@ -93,8 +104,7 @@ Image types are symbols like `xbm' or `jpeg'."
   "Open header in other window"
   (interactive)
   (helm-projectile-find-other-file)
-  (move-buffer-other-window)
-  (other-window 1))
+  (move-buffer-other-window))
 
 (defun move-buffer-other-window()
   "Open header in other window"
@@ -123,15 +133,17 @@ Image types are symbols like `xbm' or `jpeg'."
   (newline)
   (c-indent-line-or-region)) 
 
-(defun open-with-designer()
+(defun my-open-with-designer()
+  "Open the current file with qt designer by taking the file base name and appending .ui and prepending ../ui"
   (interactive)
   (let ((ui-fname (concat (projectile-project-root) "ui/" (file-name-base (buffer-file-name)) ".ui")))
     (message "Opening ui file %s in qt designer" ui-fname)
-      (if (eq system-type 'darwin)
-          (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" ui-fname qt-version-in-use))
-        (progn
-          (async-shell-command (format "nohup designer %s &> /dev/null &" ui-fname)) ;; &> /dev/null redirects stdout and errout to null
-          (kill-buffer "*Async Shell Command*")))))
+    (if (eq system-type 'darwin)
+        (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" ui-fname qt-version-in-use))
+      (progn
+        (async-shell-command (format "nohup ~/bin/designer %s" ui-fname))
+        (sleep-for 1)
+        (kill-buffer "*Async Shell Command*")))))
 
 (defun launch-qt-creator()
   (interactive)
@@ -139,7 +151,8 @@ Image types are symbols like `xbm' or `jpeg'."
   (if (eq system-type 'darwin)
       (shell-command (format "open %s -a \"$HOME/Qt/Qt Creator.app/Contents/MacOS/Qt Creator\"" (buffer-file-name)))
     (progn 
-      (shell-command (format "nohup bash -c 'wmctrl -s 2 && nohup qtcreator %s' </dev/null &>/dev/null &" (buffer-file-name)))
+      (async-shell-command (format "wmctrl -s 2;nohup qtcreator %s" (buffer-file-name)))
+      (sleep-for 1)
       (kill-buffer "*Async Shell Command*"))))
 
 (defun open-scratch-buffer()
@@ -164,12 +177,16 @@ Image types are symbols like `xbm' or `jpeg'."
     (find-file cur-buf-fname)
     (set-window-point (selected-window) cur-point)))
 
-(defun ui-file-handler ()
+(defun ui-file-handler()
   (when (and (stringp buffer-file-name)
              (string-match "\\.ui\\'" buffer-file-name))
     (switch-to-prev-buffer)
-    (async-shell-command (format "nohup designer %s &>/dev/null" (buffer-file-name)))
-    (kill-buffer "*Async Shell Command*")
+    (if (eq system-type 'darwin)
+        (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" (buffer-file-name) qt-version-in-use))
+      (progn
+        (async-shell-command (format "nohup ~/bin/designer %s" (buffer-file-name)))
+        (sleep-for 1)
+        (kill-buffer "*Async Shell Command*")))
     (kill-buffer (get-file-buffer buffer-file-name))))
 
 ;; Make the scratch buffer just switch to whatever the previous buffer was instead of killing
@@ -230,6 +247,13 @@ Image types are symbols like `xbm' or `jpeg'."
   (interactive)
   (format "./.emacs/run.sh %s" (my-cmake-get-config-from-user)))
 
+(defun my-cmake-get-install-command ()
+  (interactive)
+  (format "./.emacs/install.sh %s" (my-cmake-get-config-from-user)))
+
+(defun my-cmake-get-package-command ()
+  (interactive)
+  (format "./.emacs/package.sh %s" (my-cmake-get-config-from-user)))
 
 ;; Move text and selected regions up and down
 (defun move-text-internal (arg)
@@ -267,17 +291,15 @@ Image types are symbols like `xbm' or `jpeg'."
 
 (defun proj-helper (projectile-func)
   (let ((cur-buf-name (buffer-name)))
-    (call-interactively projectile-func)
+    (call-interactively projectile-func)    
     (message "Compilation called with current buffer set as %s" cur-buf-name)
     (if (equal cur-buf-name "*compilation*")
         (progn
-          (message "Already in comp buffer - moving to end")
-          (end-of-buffer))
+          (message "Already in comp buffer - moving to end"))
       (progn ;; (else)
-        (message "Moving compilation to other window")
-        (move-buffer-other-window)
-        (end-of-buffer)
-        (other-window 1)))))
+        (message "Opening compilation to other window")
+        (move-buffer-other-window)))
+    (end-of-buffer)))
 
 (defun proj-comp()
   (interactive)
@@ -290,6 +312,14 @@ Image types are symbols like `xbm' or `jpeg'."
 (defun proj-run()
   (interactive)
   (proj-helper #'projectile-run-project))
+
+(defun proj-install()
+  (interactive)
+  (proj-helper #'projectile-install-project))
+
+(defun proj-package()
+  (interactive)
+  (proj-helper #'projectile-package-project))
 
 ;; Dont whine if there is a terminal open
 (defun set-no-process-query-on-exit ()
@@ -321,16 +351,6 @@ Image types are symbols like `xbm' or `jpeg'."
             (w3m-browse-url (concat "http://mongoc.org/libbson/current/" (downcase (format "%s" cur-symbol)) ".html")))
         (message "No symbol at point"))))
 
-;; (defun open-symbol-at-point-in-qt-web-doc ()
-;;     (interactive)
-;;     (let ((cur-symbol (symbol-at-point)))
-;;       (if cur-symbol
-;;           (progn
-;;             (message "Loading documentation for %s" cur-symbol)
-;;             (other-window 1)
-;;             (w3m-browse-url (concat "https://doc.qt.io/qt-6/" (downcase (format "%s" cur-symbol)) ".html")))
-;;         (message "No symbol at point"))))
-
 (defun open-symbol-at-point-in-qt-web-doc ()
     (interactive)
     (let ((cur-symbol (symbol-at-point)))
@@ -346,13 +366,10 @@ Image types are symbols like `xbm' or `jpeg'."
                 (message "Symbol at point %s not found in Qt docs" cur-symbol))))
         (message "No symbol at point"))))
 
-(defun start-trello-mode-if-needed ()
-  (interactive)
-   (let ((filename (buffer-file-name (current-buffer))))
-     (when (and filename (string= "trello" (file-name-extension filename)))
-       (org-trello-mode))))
-
 ;; Here are all my custom macros
+
+(fset 'cpp-make-pup-member
+   (kmacro-lambda-form [?\M-e ?\C-\M-b ?p ?u ?p ?_ ?m ?e ?m ?b ?e ?r ?\( ?\C-d ?\C-\M-f ?\) ?\C-k ?\; ?\C-\M-b ?\C-\M-b ?\C-  ?\C-a backspace ?\C-i ?\C-n] 0 "%d"))
 
 (fset 'cpp-create-method-def-after
    (kmacro-lambda-form [?\C-a tab ?\M-a ?\C-e ?\C-\M-p 134217802 ?\C-  ?\C-\M-b ?\M-w ?\C-\M-e return ?\C-y ?\C-x ?o ?\M-e ?\M-e ?\M-a ?\C-  ?\C-\M-f ?\M-w ?\C-x ?o ?\C-y ?\C-/ ?\C-a ?\C-y ?  ?\C-e ?\C-x ?o ?\C-f ?\C-  ?\C-e ?\M-w ?\C-a tab ?\C-x ?o ?\C-y backspace return ?\{ return ?\C-\M-e return ?\C-\M-a ?\C-n ?\C-n tab] 0 "%d"))
@@ -365,3 +382,9 @@ Image types are symbols like `xbm' or `jpeg'."
 
 (fset 'cpp-create-func-def-after
    (kmacro-lambda-form [?\C-a tab ?\M-a ?\C-e ?\C-\M-p 134217802 ?\C-\M-e return ?\C-x ?o ?\M-e ?\M-e ?\M-a ?\C-  ?\C-e ?\M-w ?\C-a ?\C-x ?o ?\C-y backspace return ?\{ return ?\C-\M-e return ?\C-\M-a ?\C-n ?\C-n tab] 0 "%d"))
+
+(fset 'cpp-pup-to-operator-equals
+   (kmacro-lambda-form [?\C-\M-k ?\C-f ?l ?h ?s ?. ?\C-  ?\C-\M-f ?\M-w ?  ?= ?= ?  ?r ?h ?s ?. ?\C-y ?\C-f ?\C-d ?  ?& ?& ?\M-m ?\C-n] 0 "%d"))
+
+(fset 'cpp-pup-to-operator-decimal-equals
+   (kmacro-lambda-form [?\C-\M-k ?\C-f ?\C-  ?\C-\M-f ?\M-w ?\C-\M-b ?l ?h ?s ?. ?\C-\M-f ?, ?r ?h ?s ?. ?\C-y ?\C-f ?\C-\M-b ?d ?e ?c ?i ?m ?a ?l ?_ ?e ?u ?q ?a ?l backspace backspace backspace backspace ?q ?u ?a ?l ?s ?\C-e ?\C-b ?\C-d ?  ?& ?& ?\M-m ?\C-n] 0 "%d"))

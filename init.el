@@ -44,8 +44,9 @@
 ;; C-z
 (global-set-key (kbd "C-z C-m") 'open-scratch-buffer)
 (global-set-key (kbd "C-z n g") 'open-global-notes)
+(global-set-key (kbd "C-z n j") 'open-journal-notes)
 (global-set-key (kbd "C-z n l") 'open-local-notes)
-(global-set-key (kbd "C-z n p") 'open-project-notes)
+(global-set-key (kbd "C-z n p") 'open-project-todo)
 (global-set-key (kbd "C-z C-,") 'open-settings)
 (global-set-key (kbd "C-z ,") 'open-settings-funcs)
 (global-set-key (kbd "C-z C-r") 'reload-current-buffer)
@@ -55,13 +56,19 @@
 (global-set-key (kbd "C-z C-t") 'multi-term-dedicated-toggle)
 
 ;; Function
-(global-set-key (kbd "<f4>") 'open-with-designer)
+(global-set-key (kbd "<f4>") 'my-open-with-designer)
 (global-set-key (kbd "<f5>") 'proj-comp)
 (global-set-key (kbd "<f6>") 'proj-conf)
 (global-set-key (kbd "<f7>") 'proj-run)
+(global-set-key (kbd "<f8>") 'proj-install)
+(global-set-key (kbd "<f9>") 'proj-package)
 (global-set-key (kbd "C-<f7>") 'launch-qt-creator)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 
+;; Friggin annoying accidental page up/page down
+(global-unset-key (kbd "C-v"))
+(global-unset-key (kbd "M-v"))
+                       
 ;; Unset arrow keys and undo key so that I stop using them by accident
 (global-unset-key (kbd "<left>"))
 (global-unset-key (kbd "<right>"))
@@ -80,9 +87,16 @@
 (global-unset-key (kbd "C-x <left>"))
 (global-unset-key (kbd "C-x <right>"))
 
+
 ;; Make two splits and fullscreen
-(add-to-list 'initial-frame-alist '(fullscreen . maximized))
-(my-reset-splits)
+(if (eq (length command-line-args) 1)
+    (progn 
+      (add-to-list 'initial-frame-alist '(fullscreen . maximized))
+      (my-reset-splits)
+      (find-file "~/"))
+  (progn
+    (add-to-list 'default-frame-alist '(height . 60))
+    (add-to-list 'default-frame-alist '(width . 150))))
 
 (global-subword-mode 1) ;; Turn on superword mode by defaul
 (show-paren-mode 1) ;; highlight matching paren
@@ -93,36 +107,90 @@
 (add-to-list 'same-window-buffer-names "*shell*")
 (add-to-list 'same-window-buffer-names "*GNU Emacs*")
 
-;; Since clang format is used, really don't need much other than 4 space tab
-(defconst my-c-style
-  '((c-basic-offset . 4)
-    (c-offsets-alist
-     (topmost-intro . 0)
-     (cpp-define-intro . +)
-     (defun-open . 0)
-     (defun-block-intro . +)
-     (statement . 0)
-     (statement-block-intro . +)
-     (block-close . 0)
-     (substatement . +)
-     (defun-close . 0)
-     (else-clause . 0)
-     (namespace-open . 0)
-     (innamespace . 0)
-     (namespace-close . 0)
-     (c . c-lineup-C-comments)
-     (inher-cont . c-lineup-multi-inher)
-     (string . -1000)
-     (comment-intro . c-lineup-comment)
-     (arglist-cont-nonempty . c-lineup-arglist)
-     (arglist-close . c-lineup-close-paren)
-     (cpp-macro . -1000))))
-(c-add-style "my-c-style" my-c-style)
+(c-add-style "Guessed Style"
+             '("*c-guess*:/home/dprandle/projects/uber_mail/src/uber_analytics.cpp"
+               (c-basic-offset . 4)     ; Guessed value
+               (c-offsets-alist
+                (arglist-cont . 0)      ; Guessed value
+                (arglist-intro . +)     ; Guessed value
+                (block-close . 0)       ; Guessed value
+                (brace-entry-open . 0)  ; Guessed value
+                (brace-list-close . 0)  ; Guessed value
+                (brace-list-entry . 0)  ; Guessed value
+                (brace-list-intro . +)  ; Guessed value
+                (brace-list-open . 0)   ; Guessed value
+                (class-close . 0)       ; Guessed value
+                (class-open . 0)        ; Guessed value
+                (cpp-define-intro . +)  ; Guessed value
+                (defun-block-intro . +) ; Guessed value
+                (defun-close . 0)       ; Guessed value
+                (defun-open . 0)        ; Guessed value
+                (else-clause . 0)       ; Guessed value
+                (inclass . +)           ; Guessed value
+                (inline-close . 0)      ; Guessed value
+                (statement . 0)         ; Guessed value
+                (statement-block-intro . +) ; Guessed value
+                (statement-cont . +)    ; Guessed value
+                (substatement . +)      ; Guessed value
+                (substatement-open . 0) ; Guessed value
+                (topmost-intro . 0)     ; Guessed value
+                (topmost-intro-cont . 0) ; Guessed value
+                (access-label . -)
+                (annotation-top-cont . 0)
+                (annotation-var-cont . +)
+                (arglist-close . c-lineup-close-paren)
+                (arglist-cont-nonempty . c-lineup-arglist)
+                (block-open . 0)
+                (c . c-lineup-C-comments)
+                (case-label . 0)
+                (catch-clause . 0)
+                (comment-intro . c-lineup-comment)
+                (composition-close . 0)
+                (composition-open . 0)
+                (cpp-macro . -1000)
+                (cpp-macro-cont . +)
+                (do-while-closure . 0)
+                (extern-lang-close . 0)
+                (extern-lang-open . 0)
+                (friend . 0)
+                (func-decl-cont . +)
+                (incomposition . +)
+                (inexpr-class . +)
+                (inexpr-statement . +)
+                (inextern-lang . +)
+                (inher-cont . c-lineup-multi-inher)
+                (inher-intro . +)
+                (inlambda . 0)
+                (inline-open . +)
+                (inmodule . +)
+                (innamespace . +)
+                (knr-argdecl . 0)
+                (knr-argdecl-intro . +)
+                (label . 2)
+                (lambda-intro-cont . +)
+                (member-init-cont . c-lineup-multi-inher)
+                (member-init-intro . +)
+                (module-close . 0)
+                (module-open . 0)
+                (namespace-close . 0)
+                (namespace-open . 0)
+                (objc-method-args-cont . c-lineup-ObjC-method-args)
+                (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+                (objc-method-intro .
+                                   [0])
+                (statement-case-intro . +)
+                (statement-case-open . 0)
+                (stream-op . c-lineup-streamop)
+                (string . -1000)
+                (substatement-label . 2)
+                (template-args-cont c-lineup-template-args +))))
 
 ;; Set the default vars
 (setq backup-directory-alist `((".*" . , "~/.emacs.d/backup/"))
       auto-save-file-name-transforms `((".*" ,"~/.emacs.d/backup/" t))
       split-window-preferred-function '(lambda () (nil)) ;; Don't ever split windows
+      inhibit-splash-screen t
+      inhibit-startup-message t
       vc-follow-symlinks t
       qt-version-in-use "6.3.0"
       org-latex-to-pdf-process (list "latexmk -pdf %f")
@@ -154,7 +222,8 @@
   (setq helm-split-window-in-side-p t)
   :config
   (helm-mode)
-  :bind (("C-c C-f" . helm-imenu)
+  :bind (("C-z C-f" . helm-imenu)
+         ("C-c C-f" . helm-imenu)
          ("C-S-s" . helm-occur)
 	 ([remap find-file] . helm-find-files)
 	 ([remap execute-extended-command] . helm-M-x)
@@ -188,6 +257,8 @@
                                     :compile 'my-cmake-get-compile-command
 				    :configure 'my-cmake-get-config-command
 				    :run 'my-cmake-get-run-command
+                                    :install 'my-cmake-get-install-command
+                                    :package 'my-cmake-get-package-command
                                     :src-dir "src/")
   :demand t
   :ensure t)
@@ -252,6 +323,9 @@
 	 ("C-c d m" . open-symbol-at-point-in-mongo-doc)
 	 ("C-c d b" . open-symbol-at-point-in-bson-doc)
 	 ("C-c C-d" . lsp-ui-doc-glance)
+         ("C-z m p" . cpp-make-pup-member)
+         ("C-z m =" . cpp-pup-to-operator-equals)
+         ("C-z m +" . cpp-pup-to-operator-decimal-equals)
          ("C-z m m a" . cpp-create-method-def-after)
          ("C-z m m e" . cpp-create-method-def-at-end)
          ("C-z m f a" . cpp-create-func-def-after)
@@ -322,7 +396,6 @@
   :ensure t)
 
 (use-package org
-  :mode ("\\.trello\\'" . org-mode)
   :hook (org-mode . (lambda ()
                       (set (make-local-variable 'split-window-preferred-function) 'split-window-sensibly)
                       (visual-line-mode)))
@@ -358,6 +431,8 @@
                         (load-theme 'dprandle-dark t)
                         (if (equal system-name "dprandle-hp")
                             (set-face-attribute 'default nil :height 132))
+                        (if (equal system-name "dprandle-HP-laptop")
+                            (set-face-attribute 'default nil :height 132)) ;; 180 for normal laptop
                         (if (eq system-type 'darwin)
                             (set-face-attribute 'default nil :family "Menlo" :height 112)))))
 
@@ -367,11 +442,10 @@
 (add-hook 'c++-mode-hook 'my-c++-mode-hook)
 (add-hook 'find-file-hook 'ui-file-handler)
 (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
-(add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
+(add-hook 'shell-mode-hook 'my-shell-mode-setup-function)
 (add-hook 'compilation-start-hook #'my-compilation-start-hook)
 (add-hook 'compilation-finish-functions #'my-compilation-finish-function)
 (add-hook 'compilation-filter-hook 'my-ansi-colorize-buffer)
-(add-hook 'shell-mode-hook 'my-ansi-colorize-buffer)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -404,18 +478,23 @@
  '(indent-tabs-mode nil)
  '(ispell-dictionary nil)
  '(line-spacing 4)
+ '(lsp-clangd-binary-path
+   "/home/dprandle/.emacs.d/.cache/lsp/clangd/clangd_13.0.0/bin/clangd")
+ '(lsp-clangd-version "13.0.0")
  '(lsp-clients-clangd-args '("--header-insertion=never"))
  '(lsp-ui-doc-position 'at-point)
+ '(magit-todos-insert-after '(bottom) nil nil "Changed by setter of obsolete option `magit-todos-insert-at'")
+ '(magit-todos-mode t nil (magit-todos))
  '(magit-todos-scanner 'magit-todos--scan-with-rg)
  '(mc--reset-read-variables
    '(mc--read-char-from-minibuffer mc--register-read-with-preview mc--read-quoted-char mc--read-char))
  '(mc/always-run-for-all t)
  '(menu-bar-mode nil)
  '(multi-term-dedicated-close-back-to-open-buffer-p nil)
- '(multi-term-dedicated-max-window-height 50)
+ '(multi-term-dedicated-max-window-height 40)
  '(multi-term-dedicated-select-after-open-p t)
  '(multi-term-dedicated-skip-other-window-p t)
- '(multi-term-dedicated-window-height 50)
+ '(multi-term-dedicated-window-height 40)
  '(multi-term-scroll-show-maximum-output nil)
  '(multi-term-switch-after-close nil)
  '(ns-command-modifier 'control)
@@ -436,21 +515,24 @@
      ("fontsize" "\\scriptsize")))
  '(org-latex-pdf-process '("latexmk -f -pdf -shell-escape -output-directory=%o %f"))
  '(org-todo-keyword-faces
-   '(("IN-PROGRESS" . "violet")
+   '(("REQUEST" . "orange")
+     ("IN-PROGRESS" . "violet")
      ("DONE" . "green")
      ("TODO" . "yellow")
-     ("CANCELLED" . "#cc9393")
+     ("CANCELLED" . "steel blue")
      ("ISSUE" . "#ff2222")
      ("BUG" . "red")
-     ("FIXED" . "green")))
+     ("FIXED" . "green")
+     ("NOTE" . "#cc9393")))
  '(org-todo-keywords
-   '((sequence "TODO(t!)" "IN-PROGRESS(p!)" "|" "DONE(d@)" "CANCELLED(c@)")
-     (sequence "ISSUE(i!)" "BUG(b@)" "|" "FIXED(f@)" "RESOLVED(r@)")))
- '(org-trello-current-prefix-keybinding "C-c o")
+   '((sequence "REQUEST(q)" "TODO(t)" "IN-PROGRESS(p)" "|" "DONE(d)" "CANCELLED(c)" "BACKBURNER(l)")
+     (sequence "ISSUE(i)" "BUG(b)" "|" "FIXED(f)" "RESOLVED(r)")
+     (sequence "NOTE(n)")))
  '(package-selected-packages '(vscode-dark-plus-theme use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
  '(safe-local-variable-values
-   '((qt-version-in-use . 6\.4\.2)
+   '((qt-version-in-use . 6\.5\.0)
+     (qt-version-in-use . 6\.4\.2)
      (qt-version-in-use . "6.2.3")
      (qt-version-in-use . "6.3.0")
      (qt-version-in-use . "6.3.1")))
@@ -474,10 +556,3 @@
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
-
-;; These need to go last because the above changes default font - this will change for mac and linux
-(if (eq system-type 'darwin)
-    (set-face-attribute 'default nil :family "Menlo" :height 112))
-
-(if (eq system-name 'dprandle-hp)
-    (set-face-attribute 'default nil :height 150))
