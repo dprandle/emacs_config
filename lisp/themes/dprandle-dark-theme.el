@@ -3,7 +3,7 @@
 
 (custom-theme-set-faces
  'dprandle-dark
- '(default ((t (:family "Ubuntu Mono" :foundry "DAMA" :width normal :height 124 :weight normal :slant normal :underline nil :overline nil :extend nil :strike-through nil :box nil :inverse-video nil :foreground "wheat" :background "#1e1e1e" :stipple nil :inherit nil))))
+ '(default ((t (:family "Ubuntu Mono" :foundry "DAMA" :width normal :height 112 :weight normal :slant normal :underline nil :overline nil :extend nil :strike-through nil :box nil :inverse-video nil :foreground "wheat" :background "#1e1e1e" :stipple nil :inherit nil))))
  '(company-tooltip ((t (:background "#252525"))))
  '(company-tooltip-selection ((t (:background "#04395e"))))
  '(compilation-info ((t (:foreground "gray"))))

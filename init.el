@@ -107,90 +107,121 @@
 (add-to-list 'same-window-buffer-names "*shell*")
 (add-to-list 'same-window-buffer-names "*GNU Emacs*")
 
-(c-add-style "Guessed Style"
-             '("*c-guess*:/home/dprandle/projects/uber_mail/src/uber_analytics.cpp"
-               (c-basic-offset . 4)     ; Guessed value
-               (c-offsets-alist
-                (arglist-cont . 0)      ; Guessed value
-                (arglist-intro . +)     ; Guessed value
-                (block-close . 0)       ; Guessed value
-                (brace-entry-open . 0)  ; Guessed value
-                (brace-list-close . 0)  ; Guessed value
-                (brace-list-entry . 0)  ; Guessed value
-                (brace-list-intro . +)  ; Guessed value
-                (brace-list-open . 0)   ; Guessed value
-                (class-close . 0)       ; Guessed value
-                (class-open . 0)        ; Guessed value
-                (cpp-define-intro . +)  ; Guessed value
-                (defun-block-intro . +) ; Guessed value
-                (defun-close . 0)       ; Guessed value
-                (defun-open . 0)        ; Guessed value
-                (else-clause . 0)       ; Guessed value
-                (inclass . +)           ; Guessed value
-                (inline-close . 0)      ; Guessed value
-                (statement . 0)         ; Guessed value
-                (statement-block-intro . +) ; Guessed value
-                (statement-cont . +)    ; Guessed value
-                (substatement . +)      ; Guessed value
-                (substatement-open . 0) ; Guessed value
-                (topmost-intro . 0)     ; Guessed value
-                (topmost-intro-cont . 0) ; Guessed value
-                (access-label . -)
-                (annotation-top-cont . 0)
-                (annotation-var-cont . +)
-                (arglist-close . c-lineup-close-paren)
-                (arglist-cont-nonempty . c-lineup-arglist)
-                (block-open . 0)
-                (c . c-lineup-C-comments)
-                (case-label . 0)
-                (catch-clause . 0)
-                (comment-intro . c-lineup-comment)
-                (composition-close . 0)
-                (composition-open . 0)
-                (cpp-macro . -1000)
-                (cpp-macro-cont . +)
-                (do-while-closure . 0)
-                (extern-lang-close . 0)
-                (extern-lang-open . 0)
-                (friend . 0)
-                (func-decl-cont . +)
-                (incomposition . +)
-                (inexpr-class . +)
-                (inexpr-statement . +)
-                (inextern-lang . +)
-                (inher-cont . c-lineup-multi-inher)
-                (inher-intro . +)
-                (inlambda . 0)
-                (inline-open . +)
-                (inmodule . +)
-                (innamespace . +)
-                (knr-argdecl . 0)
-                (knr-argdecl-intro . +)
-                (label . 2)
-                (lambda-intro-cont . +)
-                (member-init-cont . c-lineup-multi-inher)
-                (member-init-intro . +)
-                (module-close . 0)
-                (module-open . 0)
-                (namespace-close . 0)
-                (namespace-open . 0)
-                (objc-method-args-cont . c-lineup-ObjC-method-args)
-                (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
-                (objc-method-intro .
-                                   [0])
-                (statement-case-intro . +)
-                (statement-case-open . 0)
-                (stream-op . c-lineup-streamop)
-                (string . -1000)
-                (substatement-label . 2)
-                (template-args-cont c-lineup-template-args +))))
+(defconst my-c-style
+  '((c-tab-always-indent        . t)
+    (c-comment-only-line-offset . 4)
+    (c-hanging-braces-alist     . ((substatement-open after)
+                                   (brace-list-open)))
+    (c-hanging-colons-alist     . ((member-init-intro before)
+                                   (inher-intro)
+                                   (case-label after)
+                                   (label after)
+                                   (access-label after)))
+    (c-cleanup-list             . (scope-operator
+                                   empty-defun-braces
+                                   defun-close-semi))
+    (c-offsets-alist            . ((arglist-close . c-lineup-arglist)
+                                   (substatement-open . 0)
+                                   (case-label        . 4)
+                                   (block-open        . 0)
+                                   (knr-argdecl-intro . -)))
+    (c-echo-syntactic-information-p . t))
+  "My C Programming Style")
+
+(defconst my-c-style
+  '((c-basic-offset . 4)     ; Guessed value
+    (c-hanging-braces-alist . ((substatement-open after)
+                               (brace-list-open)))
+    (c-hanging-colons-alist . ((member-init-intro before)
+                               (inher-intro)
+                               (case-label after)
+                               (label after)
+                               (access-label after)))
+    (c-cleanup-list . (scope-operator
+                       empty-defun-braces
+                       defun-close-semi))
+    (c-offsets-alist
+     (arglist-cont . 0)      ; Guessed value
+     (arglist-intro . +)     ; Guessed value
+     (block-close . 0)       ; Guessed value
+     (brace-entry-open . 0)  ; Guessed value
+     (brace-list-close . 0)  ; Guessed value
+     (brace-list-entry . 0)  ; Guessed value
+     (brace-list-intro . +)  ; Guessed value
+     (brace-list-open . 0)   ; Guessed value
+     (class-close . 0)       ; Guessed value
+     (class-open . 0)        ; Guessed value
+     (cpp-define-intro . +)  ; Guessed value
+     (defun-block-intro . +) ; Guessed value
+     (defun-close . 0)       ; Guessed value
+     (defun-open . 0)        ; Guessed value
+     (else-clause . 0)       ; Guessed value
+     (inclass . +)           ; Guessed value
+     (inline-close . 0)      ; Guessed value
+     (statement . 0)         ; Guessed value
+     (statement-block-intro . +) ; Guessed value
+     (statement-cont . +)    ; Guessed value
+     (substatement . +)      ; Guessed value
+     (substatement-open . 0) ; Guessed value
+     (topmost-intro . 0)     ; Guessed value
+     (topmost-intro-cont . 0) ; Guessed value
+     (access-label . -)
+     (annotation-top-cont . 0)
+     (annotation-var-cont . +)
+     (arglist-close . c-lineup-close-paren)
+     (arglist-cont-nonempty . c-lineup-arglist)
+     (block-open . 0)
+     (c . c-lineup-C-comments)
+     (case-label . 0)
+     (catch-clause . 0)
+     (comment-intro . c-lineup-comment)
+     (composition-close . 0)
+     (composition-open . 0)
+     (cpp-macro . -1000)
+     (cpp-macro-cont . +)
+     (do-while-closure . 0)
+     (extern-lang-close . 0)
+     (extern-lang-open . 0)
+     (friend . 0)
+     (func-decl-cont . +)
+     (incomposition . +)
+     (inexpr-class . +)
+     (inexpr-statement . +)
+     (inextern-lang . +)
+     (inher-cont . c-lineup-multi-inher)
+     (inher-intro . +)
+     (inlambda . 0)
+     (inline-open . +)
+     (inmodule . +)
+     (innamespace . +)
+     (knr-argdecl . 0)
+     (knr-argdecl-intro . +)
+     (label . 2)
+     (lambda-intro-cont . +)
+     (member-init-cont . c-lineup-multi-inher)
+     (member-init-intro . +)
+     (module-close . 0)
+     (module-open . 0)
+     (namespace-close . 0)
+     (namespace-open . 0)
+     (objc-method-args-cont . c-lineup-ObjC-method-args)
+     (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+     (objc-method-intro .
+                        [0])
+     (statement-case-intro . +)
+     (statement-case-open . 0)
+     (stream-op . c-lineup-streamop)
+     (string . -1000)
+     (substatement-label . 2)
+     (template-args-cont c-lineup-template-args +)))
+  "My C Style")
+
+(c-add-style "my-c-style" my-c-style)
 
 ;; Set the default vars
 (setq backup-directory-alist `((".*" . , "~/.emacs.d/backup/"))
       auto-save-file-name-transforms `((".*" ,"~/.emacs.d/backup/" t))
       split-window-preferred-function '(lambda () (nil)) ;; Don't ever split windows
-      inhibit-splash-screen t
-      inhibit-startup-message t
       vc-follow-symlinks t
       qt-version-in-use "6.3.0"
       org-latex-to-pdf-process (list "latexmk -pdf %f")
@@ -222,8 +253,7 @@
   (setq helm-split-window-in-side-p t)
   :config
   (helm-mode)
-  :bind (("C-z C-f" . helm-imenu)
-         ("C-c C-f" . helm-imenu)
+  :bind (("C-c C-f" . helm-imenu)
          ("C-S-s" . helm-occur)
 	 ([remap find-file] . helm-find-files)
 	 ([remap execute-extended-command] . helm-M-x)
@@ -235,7 +265,7 @@
 	 ;; The persistant action is basically tab complete - change it so it matches what terms use
 	 ("C-i" . helm-execute-persistent-action)
 	 ("<tab>" . helm-execute-persistent-action)
-	 ("C-z C-a" . helm-select-action))
+	 ("C-x C-a" . helm-select-action))
   :demand t
   :ensure t)
 
@@ -265,6 +295,9 @@
 
 ;; Iedit for fase multi-reference edits - defaults to C-; which works well
 (use-package iedit
+  :ensure t)
+
+(use-package glsl-mode
   :ensure t)
 
 ;; Only git interface worth its salt (and vscode's)
@@ -298,6 +331,10 @@
 	 ("M-R" . mc/mark-previous-like-this)
 	 ("C-<next>" . mc/mark-next-lines)
 	 ("C-<prior>" . mc/mark-previous-lines))
+  :ensure t)
+
+(use-package company-glsl
+  :after (company glsl-mode)
   :ensure t)
 
 ;; Some snippets for various languages (and ability to create our own snippets)
@@ -433,6 +470,8 @@
                             (set-face-attribute 'default nil :height 132))
                         (if (equal system-name "dprandle-HP-laptop")
                             (set-face-attribute 'default nil :height 132)) ;; 180 for normal laptop
+                        (if (eq system-type 'windows-nt)
+                            (set-face-attribute 'default nil :family "Courier New" :height 100))
                         (if (eq system-type 'darwin)
                             (set-face-attribute 'default nil :family "Menlo" :height 112)))))
 
@@ -459,6 +498,7 @@
  '(custom-theme-directory "~/.emacs.d/lisp/themes")
  '(dired-dwim-target 'dired-dwim-target-next)
  '(display-line-numbers nil)
+ '(fancy-splash-image nil)
  '(fill-column 120)
  '(git-commit-fill-column 70)
  '(global-company-mode t)
@@ -475,11 +515,11 @@
      ("FIXME" . "dark orange")
      ("DEBUG" . "steel blue")))
  '(hl-todo-require-punctuation nil)
+ '(ignored-local-variable-values '((qt-version-in-use . "6.5.2")))
  '(indent-tabs-mode nil)
  '(ispell-dictionary nil)
  '(line-spacing 4)
- '(lsp-clangd-binary-path
-   "/home/dprandle/.emacs.d/.cache/lsp/clangd/clangd_13.0.0/bin/clangd")
+ '(lsp-clangd-binary-path "~/.emacs.d/.cache/lsp/clangd/clangd_13.0.0/bin/clangd")
  '(lsp-clangd-version "13.0.0")
  '(lsp-clients-clangd-args '("--header-insertion=never"))
  '(lsp-ui-doc-position 'at-point)
@@ -530,6 +570,7 @@
      (sequence "NOTE(n)")))
  '(package-selected-packages '(vscode-dark-plus-theme use-package))
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
+ '(ring-bell-function 'ignore)
  '(safe-local-variable-values
    '((qt-version-in-use . 6\.5\.0)
      (qt-version-in-use . 6\.4\.2)
@@ -540,6 +581,8 @@
  '(show-paren-mode t)
  '(term-unbind-key-list '("C-z" "C-x" "C-h" "C-y" "<ESC>"))
  '(tool-bar-mode nil)
+ '(visible-bell nil)
+ '(warning-suppress-types '((use-package) (use-package) (use-package) (use-package)))
  '(window-combination-resize t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

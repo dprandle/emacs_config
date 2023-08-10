@@ -141,7 +141,7 @@ Image types are symbols like `xbm' or `jpeg'."
     (if (eq system-type 'darwin)
         (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" ui-fname qt-version-in-use))
       (progn
-        (async-shell-command (format "nohup ~/bin/designer %s" ui-fname))
+        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s" ui-fname))
         (sleep-for 1)
         (kill-buffer "*Async Shell Command*")))))
 
@@ -184,7 +184,7 @@ Image types are symbols like `xbm' or `jpeg'."
     (if (eq system-type 'darwin)
         (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" (buffer-file-name) qt-version-in-use))
       (progn
-        (async-shell-command (format "nohup ~/bin/designer %s" (buffer-file-name)))
+        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s" (buffer-file-name)))
         (sleep-for 1)
         (kill-buffer "*Async Shell Command*")))
     (kill-buffer (get-file-buffer buffer-file-name))))
@@ -230,6 +230,13 @@ Image types are symbols like `xbm' or `jpeg'."
 
 (setq command_default_list (list "debug" "release"))
 (setq command_hist_list (list))
+(setq script_ext "sh")
+(setq script_dir ".emacs/")
+
+(if (equal system-type 'windows-nt)
+    (progn
+      (setq script_ext "bat")
+      (setq script_dir ".emacs\\")))
 
 (defun my-cmake-get-config-from-user ()
   (interactive)
@@ -237,23 +244,23 @@ Image types are symbols like `xbm' or `jpeg'."
 
 (defun my-cmake-get-compile-command ()
   (interactive)
-  (format "./.emacs/build.sh %s" (my-cmake-get-config-from-user)))
+  (format "%sbuild.%s %s" script_dir script_ext (my-cmake-get-config-from-user)))
 
 (defun my-cmake-get-config-command ()
   (interactive)
-  (format "./.emacs/configure.sh %s" (my-cmake-get-config-from-user)))
+  (format "%sconfigure.%s %s" script_dir script_ext (my-cmake-get-config-from-user)))
 
 (defun my-cmake-get-run-command ()
   (interactive)
-  (format "./.emacs/run.sh %s" (my-cmake-get-config-from-user)))
+  (format "%srun.%s %s" script_dir script_ext (my-cmake-get-config-from-user)))
 
 (defun my-cmake-get-install-command ()
   (interactive)
-  (format "./.emacs/install.sh %s" (my-cmake-get-config-from-user)))
+  (format "%sinstall.%s %s" script_dir script_ext (my-cmake-get-config-from-user)))
 
 (defun my-cmake-get-package-command ()
   (interactive)
-  (format "./.emacs/package.sh %s" (my-cmake-get-config-from-user)))
+  (format "%spackage.%s %s" script_dir script_ext (my-cmake-get-config-from-user)))
 
 ;; Move text and selected regions up and down
 (defun move-text-internal (arg)
