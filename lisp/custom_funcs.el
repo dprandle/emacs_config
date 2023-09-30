@@ -141,7 +141,7 @@ Image types are symbols like `xbm' or `jpeg'."
     (if (eq system-type 'darwin)
         (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" ui-fname qt-version-in-use))
       (progn
-        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s" ui-fname))
+        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s >/dev/null" ui-fname))
         (sleep-for 1)
         (kill-buffer "*Async Shell Command*")))))
 
@@ -151,7 +151,7 @@ Image types are symbols like `xbm' or `jpeg'."
   (if (eq system-type 'darwin)
       (shell-command (format "open %s -a \"$HOME/Qt/Qt Creator.app/Contents/MacOS/Qt Creator\"" (buffer-file-name)))
     (progn 
-      (async-shell-command (format "wmctrl -s 2;nohup qtcreator %s" (buffer-file-name)))
+      (async-shell-command (format "wmctrl -s 2;nohup qtcreator %s >/dev/null" (buffer-file-name)))
       (sleep-for 1)
       (kill-buffer "*Async Shell Command*"))))
 
@@ -184,7 +184,7 @@ Image types are symbols like `xbm' or `jpeg'."
     (if (eq system-type 'darwin)
         (shell-command (format "open %s -a $HOME/Qt/%s/macos/bin/Designer.app/Contents/MacOS/Designer" (buffer-file-name) qt-version-in-use))
       (progn
-        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s" (buffer-file-name)))
+        (async-shell-command (format "GTK_THEME=Adwaita:light nohup designer %s >/dev/null" (buffer-file-name)))
         (sleep-for 1)
         (kill-buffer "*Async Shell Command*")))
     (kill-buffer (get-file-buffer buffer-file-name))))

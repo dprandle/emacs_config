@@ -62,7 +62,7 @@
 (global-set-key (kbd "<f7>") 'proj-run)
 (global-set-key (kbd "<f8>") 'proj-install)
 (global-set-key (kbd "<f9>") 'proj-package)
-(global-set-key (kbd "C-<f7>") 'launch-qt-creator)
+(global-set-key (kbd "C-<f8>") 'launch-qt-creator)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 
 ;; Friggin annoying accidental page up/page down
@@ -375,6 +375,7 @@
   :hook ((c++-mode . lsp)
 	 (c-mode . lsp)
 	 (python-mode . lsp)
+         (glsl-mode . lsp)
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :ensure t)
@@ -455,6 +456,11 @@
 (use-package multi-term
   :ensure t)
 
+(use-package wakatime-mode
+  :config
+  (global-wakatime-mode)
+  :ensure t)
+
 (use-package wgrep
   :ensure t)
 
@@ -530,6 +536,7 @@
    '(mc--read-char-from-minibuffer mc--register-read-with-preview mc--read-quoted-char mc--read-char))
  '(mc/always-run-for-all t)
  '(menu-bar-mode nil)
+ '(mouse-wheel-progressive-speed nil)
  '(multi-term-dedicated-close-back-to-open-buffer-p nil)
  '(multi-term-dedicated-max-window-height 40)
  '(multi-term-dedicated-select-after-open-p t)
@@ -572,7 +579,8 @@
  '(qthelp-online-help nil nil nil "Customized with use-package qthelp")
  '(ring-bell-function 'ignore)
  '(safe-local-variable-values
-   '((qt-version-in-use . 6\.5\.0)
+   '((qt-version-in-use . "6.5.2")
+     (qt-version-in-use . 6\.5\.0)
      (qt-version-in-use . 6\.4\.2)
      (qt-version-in-use . "6.2.3")
      (qt-version-in-use . "6.3.0")
@@ -582,6 +590,8 @@
  '(term-unbind-key-list '("C-z" "C-x" "C-h" "C-y" "<ESC>"))
  '(tool-bar-mode nil)
  '(visible-bell nil)
+ '(wakatime-api-key "waka_cfa55a71-3945-41e9-83a3-931e5aa90d99")
+ '(wakatime-cli-path "~/.wakatime/wakatime-cli")
  '(warning-suppress-types '((use-package) (use-package) (use-package) (use-package)))
  '(window-combination-resize t))
 (custom-set-faces
